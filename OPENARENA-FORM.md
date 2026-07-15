@@ -56,20 +56,19 @@ https://github.com/Donyemiight/paygate
 
 ## Field 6: Live demo URL
 ```
-[YOUR_RENDER_URL] e.g. https://paygate-demo.onrender.com
-```
-
-(If Render not yet deployed, use the BaseScan link to the deployed contract as the "live artifact":
-```
 https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 ```
-)
+
+(Use the BaseScan link to the deployed contract. The contract + live agent state is the canonical "live artifact" for BUIDL_QUESTS. You can replace this with a Render URL after deploying the demo at https://paygate-demo.onrender.com, but the BaseScan link is acceptable as-is.)
 
 ## Field 7: Demo video URL
 ```
 [YOUTUBE_URL_OF_DEMO_VIDEO]
 ```
-(Record per DEMO-SCRIPT.md, upload unlisted, paste here)
+
+(Record per DEMO-SCRIPT.md, upload as YouTube **unlisted** (NOT private — judges need to view it without an account). Paste the link here.)
+
+If you don't have a video yet, submit with this placeholder and update the form field after you record. OpenArena allows editing submissions up to the deadline.
 
 ## Field 8: Built with
 ```
