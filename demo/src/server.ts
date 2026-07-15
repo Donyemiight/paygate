@@ -131,6 +131,14 @@ app.get("/", (_req, res) => {
   res.type("html").send(DASHBOARD_HTML);
 });
 
+// SKILL.md (x402 / agent discovery)
+app.get("/.well-known/SKILL.md", (_req, res) => {
+  res.type("text/markdown").send(SKILL_MD);
+});
+app.get("/skill.md", (_req, res) => {
+  res.type("text/markdown").send(SKILL_MD);
+});
+
 // PayGate Directory — read on-chain registry, list all agents
 mountDirectory(app);
 
@@ -307,3 +315,68 @@ const DASHBOARD_HTML = `<!doctype html>
   </script>
 </body>
 </html>`;
+
+const SKILL_MD = `---
+name: paygate-demo
+version: 0.1.0
+description: PayGate demo — three x402-protected agents (Sentiment, Summarizer, Translate) on Base Sepolia, wrapped in on-chain spending policy + kill switch.
+homepage: https://github.com/Donyemiight/paygate
+metadata:
+  paygate-registry: "0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A"
+  chain: "base-sepolia"
+  chain-id: 84532
+  track: "BUIDL_QUESTS-2026-sovereignty"
+  license: "MIT"
+---
+
+# PayGate Demo Agents
+
+A demo deployment of [PayGate](https://github.com/Donyemiight/paygate) showing three agents
+paying each other via x402, all wrapped in on-chain spending policy and a kill switch.
+
+## Agents
+
+### 1. Sentiment (free)
+- **Endpoint:** \`POST /agents/sentiment\`
+- **Price:** free
+- **Input:** \`{ "text": string }\`
+- **Output:** \`{ "sentiment": "positive"|"negative"|"neutral", "score": number, "length": number }\`
+
+### 2. Summarizer ($0.02)
+- **Endpoint:** \`POST /agents/summarize\`
+- **Price:** $0.02 USDC on Base Sepolia
+- **Input:** \`{ "text": string }\`
+- **Output:** \`{ "summary": string, "originalLength": number }\`
+
+### 3. Translate ($0.03)
+- **Endpoint:** \`POST /agents/translate\`
+- **Price:** $0.03 USDC on Base Sepolia
+- **Input:** \`{ "text": string, "targetLang": "French"|"Spanish"|"Japanese"|"German" }\`
+- **Output:** \`{ "translation": string, "sourceLang": string, "targetLang": string, "model": string, "charCount": number }\`
+
+## Payment
+
+All paid agents return HTTP 402 with x402 v2 payment requirements. Use [@paygate/sdk](https://github.com/Donyemiight/paygate) to pay and retry:
+
+\`\`\`typescript
+import { call } from "@paygate/sdk";
+const result = await call(cfg, "https://paygate-demo.onrender.com/agents/summarize", {
+  amount: 20000n, // $0.02 in 6-decimal USDC
+  body: { text: "..." },
+});
+\`\`\`
+
+## Authentication
+
+None required. Agents are paid, not authenticated.
+
+## PayGate protection
+
+Every paid agent is bound to a PayGateRegistry entry on Base Sepolia with:
+- per-call cap: $0.10
+- per-epoch cap: $1.00 (24h)
+- allowlist: open
+- kill switch: one-transaction \`registry.deactivate()\`
+
+The policy is enforced by the contract, not the SDK — a compromised agent cannot bypass it.
+`;

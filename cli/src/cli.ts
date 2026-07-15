@@ -87,6 +87,122 @@ function parseArgs(argv: string[]): Record<string, string> {
 
 // ----- commands -----------------------------------------------------------
 
+async function cmdInspect(args: Record<string, string>) {
+  banner();
+  const cfg = loadConfig();
+  const publicClient = createPublicClient({ chain: baseSepolia, transport: http(cfg.rpcUrl) });
+
+  let agentId: bigint;
+  if (args["agent"]) {
+    agentId = BigInt(args["agent"]);
+  } else {
+    const id = (await publicClient.readContract({
+      address: cfg.registryAddress as `0x${string}`,
+      abi: [
+        {
+          name: "getAgentIdByOwner",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "owner", type: "address" }],
+          outputs: [{ name: "", type: "uint256" }],
+        },
+      ],
+      functionName: "getAgentIdByOwner",
+      args: [cfg.ownerAddress as `0x${string}`],
+    } as any)) as bigint;
+    if (id === 0n) {
+      logErr(`No agent for owner ${cfg.ownerAddress}. Run "paygate register" first.`);
+      process.exit(1);
+    }
+    agentId = id;
+  }
+
+  const binding = (await publicClient.readContract({
+    address: cfg.registryAddress as `0x${string}`,
+    abi: [
+      {
+        name: "getBinding",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "agentId", type: "uint256" }],
+        outputs: [
+          { name: "erc8004AgentId", type: "uint256" },
+          { name: "agentWallet", type: "address" },
+          { name: "policy", type: "address" },
+          { name: "humanOwner", type: "address" },
+          { name: "metadataURI", type: "string" },
+          { name: "active", type: "bool" },
+        ],
+      },
+    ],
+    functionName: "getBinding",
+    args: [agentId],
+  } as any)) as readonly [bigint, string, string, string, string, boolean];
+
+  const pol = (await publicClient.readContract({
+    address: binding[2] as `0x${string}`,
+    abi: [
+      {
+        name: "getPolicy",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [
+          { name: "perCallLimit", type: "uint128" },
+          { name: "perEpochLimit", type: "uint128" },
+          { name: "epochDuration", type: "uint64" },
+          { name: "epochSpent", type: "uint128" },
+          { name: "paused", type: "bool" },
+        ],
+      },
+    ],
+    functionName: "getPolicy",
+  } as any)) as readonly [bigint, bigint, bigint, bigint, boolean];
+
+  const usdc = (n: bigint) => `$${(Number(n) / 1e6).toFixed(4)}`;
+  const dur = (s: bigint) => {
+    const n = Number(s);
+    if (n < 60) return `${n}s`;
+    if (n < 3600) return `${Math.round(n / 60)}m`;
+    if (n < 86400) return `${Math.round(n / 3600)}h`;
+    return `${Math.round(n / 86400)}d`;
+  };
+
+  console.log();
+  console.log(`${BOLD}${CYAN}PayGate Agent Inspector${RESET}`);
+  console.log(`${DIM}${"─".repeat(45)}${RESET}`);
+  console.log(`${BOLD}Registry:${RESET}     ${cfg.registryAddress}`);
+  console.log(`${BOLD}Network:${RESET}      base-sepolia (84532)`);
+  console.log(`${BOLD}Agent ID:${RESET}     ${agentId}`);
+  console.log(`${BOLD}Status:${RESET}       ${binding[5] ? `${GREEN}ACTIVE${RESET}` : `${RED}DEACTIVATED${RESET}`}`);
+  console.log(`${DIM}${"─".repeat(45)}${RESET}`);
+  console.log(`${BOLD}Binding:${RESET}`);
+  console.log(`  agentWallet:    ${binding[1]}`);
+  console.log(`  humanOwner:     ${binding[3]}`);
+  console.log(`  policy:         ${binding[2]}`);
+  console.log(`  metadataURI:    ${binding[4]}`);
+  console.log(`  erc8004AgentId: ${binding[0]}`);
+  console.log(`${DIM}${"─".repeat(45)}${RESET}`);
+  console.log(`${BOLD}Spending policy:${RESET}`);
+  console.log(`  perCallLimit:   ${usdc(pol[0])} USDC`);
+  console.log(`  perEpochLimit:  ${usdc(pol[1])} USDC`);
+  console.log(`  epochDuration:  ${dur(pol[2])}`);
+  console.log(`  epochSpent:     ${usdc(pol[3])} USDC`);
+  console.log(`  paused:         ${pol[4] ? `${RED}YES (kill switch ON)${RESET}` : `${GREEN}no${RESET}`}`);
+  if (pol[1] > 0n) {
+    const pct = Math.min(100, Number((pol[3] * 100n) / pol[1]));
+    const filled = Math.round(pct / 5);
+    const empty = 20 - filled;
+    const bar = `${GREEN}${"█".repeat(filled)}${RESET}${DIM}${"░".repeat(empty)}${RESET}`;
+    console.log(`  progress:       [${bar}] ${pct}%`);
+  }
+  console.log(`${DIM}${"─".repeat(45)}${RESET}`);
+  console.log(`${BOLD}Links:${RESET}`);
+  console.log(`  registry:  https://sepolia.basescan.org/address/${cfg.registryAddress}`);
+  console.log(`  policy:    https://sepolia.basescan.org/address/${binding[2]}`);
+  console.log();
+}
+
 async function cmdRegister(args: Record<string, string>) {
   banner();
   const cfg = loadConfig();
@@ -307,6 +423,7 @@ async function cmdHelp() {
   console.log(`${BOLD}Usage:${RESET}
   paygate register [--per-call $X] [--per-epoch $X] [--epoch 24h] [--uri ipfs://...]
   paygate status   [--agent ID]
+  paygate inspect  [--agent ID]    (colored progress bar + BaseScan links)
   paygate call     <url> [--amount $X] [--body '{...}']
   paygate pause    [--agent ID]
   paygate resume   [--agent ID]
@@ -366,6 +483,7 @@ async function main() {
   switch (cmd) {
     case "register": return cmdRegister(args);
     case "status": return cmdStatus(args);
+    case "inspect": return cmdInspect(args);
     case "call": return cmdCall(args);
     case "pause": return cmdPause(args);
     case "resume": return cmdResume(args);
@@ -381,6 +499,7 @@ async function main() {
       process.exit(1);
   }
 }
+
 
 main().catch((e) => {
   logErr((e as Error).message);
