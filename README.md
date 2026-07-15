@@ -155,10 +155,13 @@ paygate resume
 
 - **[DEPLOY.md](./DEPLOY.md)** — Re-deploy from scratch
 - **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Design deep-dive, security model
+- **[SECURITY.md](./SECURITY.md)** — How to report a security vulnerability
 - **[docs/SECURITY.md](./docs/SECURITY.md)** — Threat model, mitigations, pre-mainnet audit recommendations
 - **[docs/SECURITY-ONE-PAGE.pdf](./docs/SECURITY-ONE-PAGE.pdf)** — 1-page security summary (Halborn-style)
 - **[docs/PITCH-DECK.pdf](./docs/PITCH-DECK.pdf)** — 4-page pitch deck for the Top 20 interview
 - **[docs/FAQ.md](./docs/FAQ.md)** — frequently asked questions
+- **[docs/GAS.md](./docs/GAS.md)** — verified gas-cost report
+- **[ROADMAP.md](./ROADMAP.md)** — what's shipped, what's planned, integration proposals
 - **[DEMO-SCRIPT.md](./DEMO-SCRIPT.md)** — 90-second video script
 - **[OPENARENA-FORM.md](./OPENARENA-FORM.md)** — Pre-filled submission form
 - **[X-POSTS.md](./X-POSTS.md)** — 4 weeks of build-in-public X posts
