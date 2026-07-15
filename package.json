@@ -20,5 +20,8 @@
     "test:sdk": "cd sdk && npm test",
     "dev:demo": "cd demo && npm run dev",
     "cli": "cd cli && npm run dev"
+  },
+  "dependencies": {
+    "viem": "^2.55.2"
   }
 }
