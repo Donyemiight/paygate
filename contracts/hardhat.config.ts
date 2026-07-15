@@ -1,16 +1,21 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import * as path from "path";
 
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY ?? "0x" + "11".repeat(32);
-const BASESCAN_API_KEY = process.env.BASESCAN_API_KEY ?? "";
 
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
       optimizer: { enabled: true, runs: 200 },
-      viaIR: true,
     },
+  },
+  paths: {
+    sources: path.join(__dirname, "src"),
+    tests: path.join(__dirname, "test"),
+    cache: path.join(__dirname, "cache"),
+    artifacts: path.join(__dirname, "artifacts"),
   },
   networks: {
     baseSepolia: {
@@ -23,22 +28,6 @@ const config: HardhatUserConfig = {
       chainId: 8453,
       accounts: [DEPLOYER_PRIVATE_KEY],
     },
-  },
-  etherscan: {
-    apiKey: {
-      baseSepolia: BASESCAN_API_KEY,
-      base: BASESCAN_API_KEY,
-    },
-    customChains: [
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
-        },
-      },
-    ],
   },
 };
 

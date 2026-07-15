@@ -3,10 +3,11 @@
 > **Project:** PayGate — Sovereign payment + identity layer for AI agents
 > **Track:** 02 — Sovereignty
 > **Submission window:** Jul 6 – Aug 12, 2026 (18:00 SGT)
-> **Repo:** https://github.com/ademidun69/paygate
+> **Repo:** https://github.com/Donyemiight/paygate
 > **Demo URL (Base Sepolia):** https://paygate-demo.onrender.com (TBD)
 > **Pitch Day:** Oct 5, Singapore
 > **Demo Day:** Oct 6, CHIJMES, Singapore
+> **Deployed contract (Base Sepolia):** `0x571F26C1d470B4528271b1e18511E03409726883` ([BaseScan ↗](https://sepolia.basescan.org/address/0x571F26C1d470B4528271b1e18511E03409726883))
 
 ---
 

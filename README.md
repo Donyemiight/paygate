@@ -9,6 +9,12 @@
 [![Base Sepolia](https://img.shields.io/badge/Base-Sepolia-0052ff)]()
 [![ERC-8004](https://img.shields.io/badge/ERC--8004-identity-22c55e)]()
 
+## 🟢 Live on Base Sepolia
+
+**Registry:** [`0x571F26C1d470B4528271b1e18511E03409726883`](https://sepolia.basescan.org/address/0x571F26C1d470B4528271b1e18511E03409726883)
+
+Run `npm run dev:demo` with `REGISTRY_ADDRESS=0x571F26C1d470B4528271b1e18511E03409726883` to interact with the deployed contract.
+
 **Built for [BUIDL_QUESTS 2026](https://openarena.to/en/events/buidl-quests-2026) · Sovereignty track (02).**
 
 ---

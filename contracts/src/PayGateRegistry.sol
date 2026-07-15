@@ -21,7 +21,7 @@ import "./SpendingPolicy.sol";
  *           - Base Identity Registry: 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432
  *           - Base Reputation Registry: 0x8004BAa17C55a88189AE136b182e5fdA19dE9b63
  */
-contract PayGateRegistry is Ownable, ReentrancyGuard {
+contract PayGateRegistry is Ownable(msg.sender), ReentrancyGuard {
     // ------------------------------------------------------------------
     // Structs
     // ------------------------------------------------------------------
