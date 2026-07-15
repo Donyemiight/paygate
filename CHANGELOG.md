@@ -2,6 +2,13 @@
 
 All notable changes to PayGate.
 
+## Security acknowledgments
+
+No external security reports have been received as of v0.1.0 (2026-07-15).
+Reporters who submit valid security disclosures will be credited here.
+
+See `SECURITY.md` for the disclosure policy.
+
 ## [0.1.0] — 2026-07-15
 
 Initial submission for BUIDL_QUESTS 2026 (Sovereignty track).

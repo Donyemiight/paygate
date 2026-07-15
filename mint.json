@@ -1,0 +1,76 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "PayGate",
+  "description": "Sovereign payment + identity layer for AI agents. x402 + ERC-8004 + on-chain spending policy + kill switch. Live on Base Sepolia.",
+  "colors": {
+    "primary": "#7c5cff",
+    "light": "#22c55e",
+    "dark": "#0b0d12"
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "README",
+              "JUDGES-QUICKSTART",
+              "DEMO-SCRIPT",
+              "DEPLOY"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "docs/ARCHITECTURE",
+              "docs/GAS",
+              "ROADMAP"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "SECURITY",
+              "docs/SECURITY",
+              "docs/SECURITY-ONE-PAGE",
+              "docs/PITCH-DECK"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "docs/FAQ",
+              "OPENARENA-FORM",
+              "SUBMISSION",
+              "X-POSTS",
+              "CHANGELOG",
+              "CONTRIBUTING"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Live",
+        "groups": [
+          {
+            "group": "Live",
+            "pages": [
+              "public/index",
+              "public/attacks",
+              "public/why"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Donyemiight/paygate"
+    }
+  }
+}

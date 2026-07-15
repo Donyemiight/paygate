@@ -1,0 +1,11 @@
+# PayGate security disclosure
+# RFC 9116 — https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:security@paygate.dev
+Contact: https://github.com/Donyemiight/paygate/security/advisories/new
+Expires: 2027-12-31T23:59:59z
+Preferred-Languages: en
+Canonical: https://github.com/Donyemiight/paygate/blob/main/.well-known/security.txt
+
+# Acknowledgments
+Acknowledgments: https://github.com/Donyemiight/paygate/blob/main/CHANGELOG.md
