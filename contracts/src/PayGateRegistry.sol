@@ -114,7 +114,7 @@ contract PayGateRegistry is Ownable(msg.sender), ReentrancyGuard {
         agentId = ++nextAgentId;
 
         SpendingPolicy policy = new SpendingPolicy(
-            msg.sender,        // owner of the policy = human controller
+            address(this),      // owner of the policy = this registry, so we can call setPaused on kill-switch
             perCallLimit,
             perEpochLimit,
             epochDuration
@@ -161,6 +161,16 @@ contract PayGateRegistry is Ownable(msg.sender), ReentrancyGuard {
         bindings[agentId].active = true;
         SpendingPolicy(bindings[agentId].policy).setPaused(false);
         emit AgentReactivated(agentId, msg.sender);
+    }
+
+    // ---- Per-agent policy management (forwards to the policy contract) ----
+
+    function setLimits(uint256 agentId, uint128 perCallLimit, uint128 perEpochLimit) external onlyAgentOwner(agentId) {
+        SpendingPolicy(bindings[agentId].policy).setLimits(perCallLimit, perEpochLimit);
+    }
+
+    function setAllowlist(uint256 agentId, address counterparty, bool allowed) external onlyAgentOwner(agentId) {
+        SpendingPolicy(bindings[agentId].policy).setAllowlist(counterparty, allowed);
     }
 
     // ------------------------------------------------------------------
