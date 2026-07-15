@@ -4,7 +4,7 @@
 
 | Contract | Address | BaseScan |
 |---|---|---|
-| **PayGateRegistry** | `0x571F26C1d470B4528271b1e18511E03409726883` | [View ↗](https://sepolia.basescan.org/address/0x571F26C1d470B4528271b1e18511E03409726883) |
+| **PayGateRegistry** | `0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A` | [View ↗](https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A) |
 
 - **Deployer:** `0xb859C2038e8b1A3AE678DEEB6D1424FaF439c7EF`
 - **Chain ID:** 84532 (Base Sepolia)

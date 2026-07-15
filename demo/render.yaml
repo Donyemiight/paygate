@@ -10,7 +10,7 @@ services:
       - key: NODE_VERSION
         value: 22.17.0
       - key: REGISTRY_ADDRESS
-        value: 0x09A4b760Ea42325508fC6b9b6777CAb667071595
+        value: 0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
       - key: RPC_URL
         value: https://sepolia.base.org
       - key: FACILITATOR_URL

@@ -117,7 +117,7 @@ Track 02: Sovereignty.
 
 x402 + ERC-8004 + on-chain policy + kill switch.
 
-Live on Base Sepolia: 0x09A4b760Ea42325508fC6b9b6777CAb667071595
+Live on Base Sepolia: 0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 
 Open source (MIT): https://github.com/Donyemiight/paygate
 

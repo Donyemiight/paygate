@@ -16,7 +16,7 @@
  *   - All x402-gated. Real payments on Base Sepolia in USDC.
  *
  * Run:
- *   REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595 \
+ *   REGISTRY_ADDRESS=0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A \
  *   AGENT_PRIVATE_KEY=0x... \
  *   npm start
  *
@@ -40,7 +40,7 @@ import { mountDirectory } from "./directory.js";
 const PORT = Number(process.env.PORT ?? 3000);
 const RPC_URL = process.env.RPC_URL ?? "https://sepolia.base.org";
 const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://www.x402.org/facilitator";
-const REGISTRY_ADDRESS = (process.env.REGISTRY_ADDRESS ?? "0x09A4b760Ea42325508fC6b9b6777CAb667071595") as `0x${string}`;
+const REGISTRY_ADDRESS = (process.env.REGISTRY_ADDRESS ?? "0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A") as `0x${string}`;
 const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`;
 
 const AGENT_PRIVATE_KEY = (process.env.AGENT_PRIVATE_KEY ??
@@ -247,7 +247,7 @@ const DASHBOARD_HTML = `<!doctype html>
       </div>
     </div>
 
-    <p class="footer">Live on Base Sepolia: <a href="https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595" target="_blank" rel="noopener">0x09A4b760Ea42325508fC6b9b6777CAb667071595</a> · Built for <a href="https://openarena.to/en/events/buidl-quests-2026" target="_blank" rel="noopener">BUIDL_QUESTS 2026</a> · MIT licensed · <a href="https://github.com/Donyemiight/paygate" target="_blank" rel="noopener">github.com/Donyemiight/paygate</a></p>
+    <p class="footer">Live on Base Sepolia: <a href="https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A" target="_blank" rel="noopener">0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A</a> · Built for <a href="https://openarena.to/en/events/buidl-quests-2026" target="_blank" rel="noopener">BUIDL_QUESTS 2026</a> · MIT licensed · <a href="https://github.com/Donyemiight/paygate" target="_blank" rel="noopener">github.com/Donyemiight/paygate</a></p>
   </div>
   <script>
     const out = document.getElementById('out');

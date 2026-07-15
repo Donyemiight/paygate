@@ -8,7 +8,7 @@ Initial submission for BUIDL_QUESTS 2026 (Sovereignty track).
 
 ### Added
 
-- `PayGateRegistry` contract — singleton on Base Sepolia at `0x09A4b760Ea42325508fC6b9b6777CAb667071595`
+- `PayGateRegistry` contract — singleton on Base Sepolia at `0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A`
 - `SpendingPolicy` contract — per-agent, enforces caps + allowlist + kill switch
 - `@paygate/sdk` — TypeScript SDK with `wrap()`, `call()`, `register()`, plus ERC-8004 helpers
 - `paygate` CLI — terminal-native tool for `register`, `status`, `pause`, `resume`, `call`, `whoami`
@@ -33,7 +33,7 @@ Initial submission for BUIDL_QUESTS 2026 (Sovereignty track).
 - No on-chain batched-settlement for multiple spend events in one tx
 - No formal verification yet
 - Not professionally audited (Halborn audit targeted for post-hackathon)
-- Deployed registry on Base Sepolia uses the older allowlist-strict logic; a v2 deployment will use the new logic (currently only in the test suite)
+- Deployed registry on Base Sepolia uses the v2 allowlist-strict fix; verified via the verify_v2.ts script
 
 See `docs/SECURITY.md` for the full threat model and pre-mainnet recommendations.
 

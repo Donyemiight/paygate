@@ -8,7 +8,7 @@
  *   GET /api/agents/:id — JSON detail for one agent
  *
  * Run:
- *   REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595 \
+ *   REGISTRY_ADDRESS=0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A \
  *   AGENT_PRIVATE_KEY=0x... \
  *   node --import tsx demo/src/directory.ts
  *
@@ -20,7 +20,7 @@ import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { getAgentIdentity, getAgentReputation, ERC8004_BASE } from "@paygate/sdk";
 
-const REGISTRY = (process.env.REGISTRY_ADDRESS ?? "0x09A4b760Ea42325508fC6b9b6777CAb667071595") as `0x${string}`;
+const REGISTRY = (process.env.REGISTRY_ADDRESS ?? "0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A") as `0x${string}`;
 const RPC = process.env.RPC_URL ?? "https://sepolia.base.org";
 
 export function mountDirectory(app: express.Express) {
@@ -162,7 +162,7 @@ const DIRECTORY_HTML = `<!doctype html>
   <div class="wrap">
     <h1>PayGate Directory <span class="pill ok">live</span></h1>
     <p class="lede">All agents registered on the PayGateRegistry contract on Base Sepolia. Each row is a sovereign identity with on-chain policy and a kill switch.</p>
-    <p class="meta">Registry: <code>0x09A4b760Ea42325508fC6b9b6777CAb667071595</code> · <a href="/api/agents" target="_blank" rel="noopener">JSON API</a> · <a href="https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595" target="_blank" rel="noopener">BaseScan</a></p>
+    <p class="meta">Registry: <code>0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A</code> · <a href="/api/agents" target="_blank" rel="noopener">JSON API</a> · <a href="https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A" target="_blank" rel="noopener">BaseScan</a></p>
     <div id="root">Loading...</div>
   </div>
   <script>

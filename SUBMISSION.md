@@ -7,7 +7,7 @@
 > **Demo URL (Base Sepolia):** https://paygate-demo.onrender.com (TBD)
 > **Pitch Day:** Oct 5, Singapore
 > **Demo Day:** Oct 6, CHIJMES, Singapore
-> **Deployed contract (Base Sepolia):** `0x571F26C1d470B4528271b1e18511E03409726883` ([BaseScan ↗](https://sepolia.basescan.org/address/0x571F26C1d470B4528271b1e18511E03409726883))
+> **Deployed contract (Base Sepolia):** `0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A` ([BaseScan ↗](https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A))
 
 ---
 

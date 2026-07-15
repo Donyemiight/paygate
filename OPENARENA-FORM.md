@@ -39,7 +39,7 @@ What PayGate adds:
 - Drop-in TypeScript SDK: wrap(fn, opts) makes any async function a PayGate-protected agent in 5 lines
 - Mitigates all 5 known attacks on x402 (arXiv:2605.11781): grant-before-settle, missing resource binding, fire-and-forget settlement, missing Cache-Control, replay
 
-Live on Base Sepolia: 0x09A4b760Ea42325508fC6b9b6777CAb667071595
+Live on Base Sepolia: 0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 Open source (MIT): https://github.com/Donyemiight/paygate
 ```
 (About 1180 chars. Fits.)
@@ -61,7 +61,7 @@ https://github.com/Donyemiight/paygate
 
 (If Render not yet deployed, use the BaseScan link to the deployed contract as the "live artifact":
 ```
-https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595
+https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 ```
 )
 

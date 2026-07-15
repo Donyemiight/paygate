@@ -11,9 +11,9 @@
 
 ## 🟢 Live on Base Sepolia
 
-**Registry:** [`0x09A4b760Ea42325508fC6b9b6777CAb667071595`](https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595)
+**Registry:** [`0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A`](https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A)
 
-Run `npm run dev:demo` with `REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595` to interact with the deployed contract.
+Run `npm run dev:demo` with `REGISTRY_ADDRESS=0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A` to interact with the deployed contract.
 
 **Built for [BUIDL_QUESTS 2026](https://openarena.to/en/events/buidl-quests-2026) · Sovereignty track (02).**
 
@@ -111,7 +111,7 @@ DEPLOYER_PRIVATE_KEY=0x... BASE_SEPOLIA_RPC=https://sepolia.base.org \
 
 # Run the demo
 cd ../demo
-REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595 \
+REGISTRY_ADDRESS=0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A \
   AGENT_PRIVATE_KEY=0x... \
   npm start
 # → http://localhost:3000
@@ -143,7 +143,7 @@ npm link
 # Then globally:
 export PAYGATE_PRIVATE_KEY=0x...
 export PAYGATE_OWNER=0x...
-export PAYGATE_REGISTRY=0x09A4b760Ea42325508fC6b9b6777CAb667071595
+export PAYGATE_REGISTRY=0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 
 paygate register --per-call 0.10 --per-epoch 1.00 --epoch 24h
 paygate status
