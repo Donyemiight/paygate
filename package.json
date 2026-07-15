@@ -7,14 +7,18 @@
   "workspaces": [
     "contracts",
     "sdk",
-    "demo"
+    "demo",
+    "cli"
   ],
   "scripts": {
     "install:all": "npm install --workspaces",
     "build:contracts": "cd contracts && npm run compile",
     "build:sdk": "cd sdk && npm run build",
+    "build:cli": "cd cli && npm run build",
+    "build:demo": "cd demo && npm run build",
     "test:contracts": "cd contracts && npm test",
     "test:sdk": "cd sdk && npm test",
-    "dev:demo": "cd demo && npm run dev"
+    "dev:demo": "cd demo && npm run dev",
+    "cli": "cd cli && npm run dev"
   }
 }

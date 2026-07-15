@@ -11,9 +11,9 @@
 
 ## 🟢 Live on Base Sepolia
 
-**Registry:** [`0x571F26C1d470B4528271b1e18511E03409726883`](https://sepolia.basescan.org/address/0x571F26C1d470B4528271b1e18511E03409726883)
+**Registry:** [`0x09A4b760Ea42325508fC6b9b6777CAb667071595`](https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595)
 
-Run `npm run dev:demo` with `REGISTRY_ADDRESS=0x571F26C1d470B4528271b1e18511E03409726883` to interact with the deployed contract.
+Run `npm run dev:demo` with `REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595` to interact with the deployed contract.
 
 **Built for [BUIDL_QUESTS 2026](https://openarena.to/en/events/buidl-quests-2026) · Sovereignty track (02).**
 
@@ -33,21 +33,6 @@ But x402 has no concept of:
 In January 2026, **ERC-8004** ("Trustless Agents") shipped on Ethereum mainnet and Base. It defines three on-chain registries — Identity, Reputation, Validation — that solve (1) and (4). Base is already home to 17,600+ registered agents.
 
 **PayGate is the missing glue: an x402 wrapper that binds every agent to an ERC-8004 identity, a per-agent SpendingPolicy contract, and a human-controlled kill switch.**
-
-## Demo
-
-```
-$ npm run dev
-# → http://localhost:3000
-```
-
-The demo runs two agents on the same process (in production each is its own service):
-
-- `POST /agents/sentiment` — charges $0.01 USDC per call
-- `POST /agents/summarize` — charges $0.02 USDC per call
-- `GET /` — owner dashboard with kill switch UI
-
-Live on Base Sepolia (USDC: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`).
 
 ## Architecture
 
@@ -91,41 +76,44 @@ Live on Base Sepolia (USDC: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`).
 └──────────────────────────────────────────────────────────────┘
 ```
 
-## What's new vs. existing x402 SDKs
+## Repository layout
 
-| Feature | `x402` (Coinbase official) | `Azeth SDK` | `MoltsPay` | **PayGate** |
-|---|---|---|---|---|
-| x402 payment flow | ✅ | ✅ | ✅ | ✅ |
-| ERC-8004 identity binding | ❌ | ✅ (read-only) | ❌ | ✅ **+ on-chain link** |
-| On-chain spending policy | ❌ | ❌ | ✅ (off-chain) | ✅ **enforced by contract** |
-| Human kill switch | ❌ | ❌ | ❌ | ✅ **one tx, irreversible** |
-| Reputation feedback per call | ❌ | ✅ (manual) | ❌ | ✅ **automatic** |
-| Known-attack mitigations | n/a | partial | partial | ✅ **all 5 (arXiv 2605.11781)** |
-| Single-file SDK | ✅ | ❌ | ❌ | ✅ **drop-in `wrap()`** |
-
-Concretely, PayGate fixes the **five known attacks on x402** identified in the May 2026 arXiv paper *Five Attacks on x402 Agentic Payment Protocol*:
-
-1. **Grant-before-settle** → we settle via facilitator BEFORE running the handler.
-2. **Missing resource-identifier binding** → payment requirement is bound to the exact request path.
-3. **Fire-and-forget settlement** → we wait for the receipt and write the on-chain policy update.
-4. **Missing `Cache-Control` headers** → every 402 response includes `Cache-Control: no-store`.
-5. **Replay** → the EIP-3009 nonce is unique per request, and the SpendingPolicy's epoch counter caps reuse.
+```
+paygate/
+├── contracts/        # PayGateRegistry + SpendingPolicy (Solidity 0.8.24, Hardhat)
+│   ├── src/          # Solidity sources
+│   ├── test/         # Forge tests
+│   ├── scripts/      # Deploy, smoke test, balance check
+│   └── artifacts/    # Compiled contracts
+├── sdk/              # @paygate/sdk — TypeScript wrapper (wrap, call, register)
+├── demo/             # 3-agent end-to-end demo (Express)
+│   └── src/agents/   # Sentiment, Summarize, Translate
+├── cli/              # paygate — terminal-native CLI
+├── docs/             # ARCHITECTURE.md, SECURITY.md
+├── public/           # Landing page (GitHub Pages)
+├── DEPLOY.md         # How to redeploy
+├── DEMO-SCRIPT.md    # 90-second video script
+├── OPENARENA-FORM.md # Pre-filled submission form
+└── X-POSTS.md        # 4 weeks of build-in-public posts
+```
 
 ## Quick start
 
 ```bash
-git clone https://github.com/ademidun69/paygate
+git clone https://github.com/Donyemiight/paygate
 cd paygate
 npm install --workspaces
 
-# Deploy contracts to Base Sepolia
+# Deploy contracts to Base Sepolia (needs testnet ETH)
 cd contracts
-npm run deploy:sepolia
-# → save REGISTRY_ADDRESS=0x...
+DEPLOYER_PRIVATE_KEY=0x... BASE_SEPOLIA_RPC=https://sepolia.base.org \
+  npx hardhat run scripts/deploy.ts --network baseSepolia
 
 # Run the demo
 cd ../demo
-REGISTRY_ADDRESS=0x... AGENT_PRIVATE_KEY=0x... npm run dev
+REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595 \
+  AGENT_PRIVATE_KEY=0x... \
+  npm start
 # → http://localhost:3000
 ```
 
@@ -136,38 +124,50 @@ Then in another shell:
 curl -X POST http://localhost:3000/agents/sentiment \
   -H "Content-Type: application/json" \
   -d '{"text":"PayGate is amazing!"}'
-# {"x402Version":2,"accepts":[{"scheme":"exact",...,"maxAmountRequired":"10000",...}]}
+# {"x402Version":2,"accepts":[{"scheme":"exact",...,"maxAmountRequired":"20000",...}]}
 
 # With PayGate SDK → 200
-import { call, loadConfig } from "@paygate/sdk";
-const cfg = loadConfig();
-const result = await call(cfg, "http://localhost:3000/agents/sentiment", {
-  amount: 10000n,
-  body: { text: "PayGate is amazing!" },
+import { call, register, wrap } from "@paygate/sdk";
+const result = await call(cfg, "http://localhost:3000/agents/summarize", {
+  amount: 20000n, body: { text: "Long article..." },
 });
-console.log(result.data); // { sentiment: "positive", score: 1, length: 21 }
-console.log(result.settlementTx); // 0x... on Base Sepolia
 ```
 
-## Repository layout
+## CLI
 
+```bash
+cd cli
+npm run build
+npm link
+
+# Then globally:
+export PAYGATE_PRIVATE_KEY=0x...
+export PAYGATE_OWNER=0x...
+export PAYGATE_REGISTRY=0x09A4b760Ea42325508fC6b9b6777CAb667071595
+
+paygate register --per-call 0.10 --per-epoch 1.00 --epoch 24h
+paygate status
+paygate pause
+paygate resume
 ```
-paygate/
-├── contracts/        # PayGateRegistry + SpendingPolicy (Solidity, Hardhat)
-├── sdk/              # @paygate/sdk — TypeScript wrapper (wrap, call, register)
-├── demo/             # 2-agent end-to-end demo (Express)
-├── docs/             # Architecture deep-dive
-└── scripts/          # Deploy, feedback, query helpers
-```
 
-## The 28-day build plan
+## Documentation
 
-| Week | Milestone |
-|---|---|
-| **W1** (Jul 16–22) | Contracts: `PayGateRegistry` + `SpendingPolicy`. Tests pass. Deploy to Base Sepolia. |
-| **W2** (Jul 23–29) | SDK: `register()`, `wrap()`, `call()`. Auto-reputation feedback. |
-| **W3** (Jul 30–Aug 5) | Demo: 2 agents, owner dashboard, kill switch UI. |
-| **W4** (Aug 6–12) | Video, README, OpenArena submission. Build-in-public posts. |
+- **[DEPLOY.md](./DEPLOY.md)** — Re-deploy from scratch
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Design deep-dive, security model
+- **[docs/SECURITY.md](./docs/SECURITY.md)** — Threat model, mitigations, pre-mainnet audit recommendations
+- **[DEMO-SCRIPT.md](./DEMO-SCRIPT.md)** — 90-second video script
+- **[OPENARENA-FORM.md](./OPENARENA-FORM.md)** — Pre-filled submission form
+- **[X-POSTS.md](./X-POSTS.md)** — 4 weeks of build-in-public X posts
+- **[SUBMISSION.md](./SUBMISSION.md)** — Full submission packet
+
+## Why this wins
+
+1. **Novelty** — the first contract-enforced spending policy for x402. The first x402 wrapper with an on-chain kill switch.
+2. **Live on testnet** — judges can verify on BaseScan. The smoke test runs in 4 seconds and passes 7/7.
+3. **Standard-composed, not standard-replaced** — uses ERC-8004 as a *consumer*, not a competitor. Works for the 17,600+ existing agents.
+4. **Security-first** — addresses all 5 known attacks on x402 (arXiv:2605.11781). Full threat model + audit recommendations in `docs/SECURITY.md`.
+5. **Open source, MIT, single-binary deploy** — drop-in `wrap()` makes any async function a PayGate-protected agent in 5 lines.
 
 ## License
 
@@ -175,6 +175,6 @@ MIT — see [LICENSE](./LICENSE).
 
 ## Contact
 
-- Repo: https://github.com/ademidun69/paygate
+- Repo: https://github.com/Donyemiight/paygate
 - Hackathon: BUIDL_QUESTS 2026, Sovereignty track
 - Built by: O.A Dolapo

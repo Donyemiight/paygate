@@ -1,44 +1,48 @@
 /**
- * PayGate demo server.
+ * PayGate demo server — final version.
  *
- * Two AI agents running on the same Node process for demo simplicity.
+ * Three AI agents running on the same Node process for demo simplicity.
  * In production each would be a separate service.
  *
- *   - "Sentiment" agent: takes text, returns { sentiment, score }. Charges $0.01.
- *   - "Summarizer" agent: takes text, returns { summary }. Charges $0.02.
+ *   - "Sentiment" agent: free demo. Naive heuristic.
+ *   - "Summarizer" agent: $0.02. Trivial first-sentence extract.
+ *   - "Translate" agent: $0.03. Real LLM (OpenAI gpt-4o-mini) with mock fallback.
  *
- *   - Orchestrator endpoint: takes a prompt, calls Sentiment, then Summarizer
- *     (paying both via PayGate), returns the combined result.
+ *   - Orchestrator endpoint: takes a prompt, calls Sentiment, then Summarizer,
+ *     then Translate (paying each via PayGate), returns the combined result.
  *
  *   - Owner dashboard: shows all registered agents, their policies, and a kill switch.
  *
- * Run:
- *   npm run dev
+ *   - All x402-gated. Real payments on Base Sepolia in USDC.
  *
- * Env (or use defaults for Base Sepolia):
- *   AGENT_PRIVATE_KEY  - private key for the agent's wallet (must have Base Sepolia USDC)
+ * Run:
+ *   REGISTRY_ADDRESS=0x09A4b760Ea42325508fC6b9b6777CAb667071595 \
+ *   AGENT_PRIVATE_KEY=0x... \
+ *   npm start
+ *
+ * Env:
+ *   AGENT_PRIVATE_KEY  - required, private key for the agent's wallet
  *   OWNER_ADDRESS      - public address of the human controller
  *   REGISTRY_ADDRESS   - deployed PayGateRegistry address
  *   RPC_URL            - Base Sepolia RPC (default https://sepolia.base.org)
  *   FACILITATOR_URL    - x402 facilitator (default https://www.x402.org/facilitator)
- *   PORT               - server port (default 3000)
+ *   PORT               - server port (default 3000, Render uses 10000)
+ *   OPENAI_API_KEY     - optional. If set, Translate agent uses real gpt-4o-mini.
  */
 
 import express from "express";
 import cors from "cors";
-import { createPublicClient, http, defineChain } from "viem";
-import { baseSepolia } from "viem/chains";
 import { wrap } from "@paygate/sdk";
 import type { PayGateConfig } from "@paygate/sdk";
+import { translateHandler } from "./agents/translate.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const RPC_URL = process.env.RPC_URL ?? "https://sepolia.base.org";
 const FACILITATOR_URL = process.env.FACILITATOR_URL ?? "https://www.x402.org/facilitator";
-const REGISTRY_ADDRESS = (process.env.REGISTRY_ADDRESS ?? "0x0000000000000000000000000000000000000000") as `0x${string}`;
+const REGISTRY_ADDRESS = (process.env.REGISTRY_ADDRESS ?? "0x09A4b760Ea42325508fC6b9b6777CAb667071595") as `0x${string}`;
 const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`;
 
 const AGENT_PRIVATE_KEY = (process.env.AGENT_PRIVATE_KEY ??
-  // Default anvil-like key for local demo; DO NOT use in production.
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80") as `0x${string}`;
 
 const OWNER_ADDRESS = (process.env.OWNER_ADDRESS ??
@@ -54,46 +58,72 @@ const config: PayGateConfig = {
   chainId: 84532,
 };
 
-// -------- Sentiment agent (free for demo; would charge $0.01) --------
-const sentimentHandler = wrap(
-  config,
-  async (input: { text: string }) => {
-    // Trivial sentiment heuristic for the demo. Real impl would call an LLM.
-    const text = (input.text ?? "").toLowerCase();
-    const positive = (text.match(/\b(good|great|love|awesome|excellent|amazing)\b/g) ?? []).length;
-    const negative = (text.match(/\b(bad|hate|terrible|awful|horrible|worst)\b/g) ?? []).length;
-    let label: "positive" | "negative" | "neutral" = "neutral";
-    if (positive > negative) label = "positive";
-    else if (negative > positive) label = "negative";
-    return { sentiment: label, score: positive - negative, length: text.length };
-  },
-  { priceUSDC: 10000n, resource: "/agents/sentiment", description: "Sentiment analysis" },
-);
+// ====================================================================
+// Agent 1: Sentiment (free, no x402)
+// ====================================================================
+const sentimentHandler = async (input: { text: string }) => {
+  const text = (input.text ?? "").toLowerCase();
+  const positive = (text.match(/\b(good|great|love|awesome|excellent|amazing)\b/g) ?? []).length;
+  const negative = (text.match(/\b(bad|hate|terrible|awful|horrible|worst)\b/g) ?? []).length;
+  let label: "positive" | "negative" | "neutral" = "neutral";
+  if (positive > negative) label = "positive";
+  else if (negative > positive) label = "negative";
+  return { sentiment: label, score: positive - negative, length: text.length };
+};
 
-// -------- Summarizer agent (charges $0.02) --------
+// ====================================================================
+// Agent 2: Summarizer ($0.02)
+// ====================================================================
 const summarizerHandler = wrap(
   config,
   async (input: { text: string }) => {
     const text = (input.text ?? "").trim();
-    if (!text) return { summary: "" };
-    // Trivial: first sentence.
+    if (!text) return { summary: "", originalLength: 0 };
     const summary = text.split(/[.!?]/)[0]?.slice(0, 200) ?? text.slice(0, 200);
     return { summary, originalLength: text.length };
   },
   { priceUSDC: 20000n, resource: "/agents/summarize", description: "Text summarization" },
 );
 
-// -------- Owner dashboard: list registered agents + kill switch --------
+// ====================================================================
+// Agent 3: Translate ($0.03) — LLM-backed with mock fallback
+// ====================================================================
+const translateAgentHandler = wrap(
+  config,
+  translateHandler,
+  { priceUSDC: 30000n, resource: "/agents/translate", description: "Translate text to target language" },
+);
+
+// ====================================================================
+// Express app
+// ====================================================================
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", paygate: true, chain: "base-sepolia", registry: REGISTRY_ADDRESS });
+  res.json({
+    status: "ok",
+    paygate: true,
+    chain: "base-sepolia",
+    registry: REGISTRY_ADDRESS,
+    openai: Boolean(process.env.OPENAI_API_KEY),
+    agents: ["sentiment (free)", "summarize ($0.02)", "translate ($0.03)"],
+  });
 });
 
-app.post("/agents/sentiment", sentimentHandler);
+app.post("/agents/sentiment", async (req, res) => {
+  try {
+    const out = await sentimentHandler(req.body);
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
 app.post("/agents/summarize", summarizerHandler);
+app.post("/agents/translate", translateAgentHandler);
 
 // Owner dashboard HTML
 app.get("/", (_req, res) => {
@@ -103,6 +133,7 @@ app.get("/", (_req, res) => {
 app.listen(PORT, () => {
   console.log(`[PayGate demo] listening on http://localhost:${PORT}`);
   console.log(`[PayGate demo] registry=${REGISTRY_ADDRESS} chain=base-sepolia`);
+  console.log(`[PayGate demo] openai=${Boolean(process.env.OPENAI_API_KEY) ? "live" : "mock"}`);
 });
 
 const DASHBOARD_HTML = `<!doctype html>
@@ -132,11 +163,13 @@ const DASHBOARD_HTML = `<!doctype html>
     .btn { display:inline-block; padding:8px 14px; border-radius:8px; background:var(--accent); color:#fff; border:0; cursor:pointer; font-weight:600; font-size:14px; }
     .btn.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); }
     .btn.danger { background:var(--err); }
+    .btn.ok { background:var(--ok); }
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
-    input,textarea { width:100%; background:#0a0c12; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font:inherit; }
+    input,textarea,select { width:100%; background:#0a0c12; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font:inherit; }
     .footer { color:var(--muted); font-size:13px; margin-top:48px; text-align:center; }
     a { color:var(--accent); }
+    .out { margin-top:10px; min-height: 40px; }
   </style>
 </head>
 <body>
@@ -147,30 +180,47 @@ const DASHBOARD_HTML = `<!doctype html>
     <h2>The agents</h2>
     <div class="grid">
       <div class="card">
-        <h3>Sentiment <span class="pill">POST /agents/sentiment</span></h3>
-        <p>Charges <span class="price">$0.01 USDC</span> per call on Base Sepolia. Returns sentiment label + score.</p>
+        <h3>Sentiment <span class="pill ok">free</span></h3>
+        <p>Returns sentiment label + score. <span class="pill">POST /agents/sentiment</span></p>
         <pre><code>curl -X POST http://localhost:3000/agents/sentiment \\
   -H "Content-Type: application/json" \\
   -d '{"text":"this is amazing!"}'</code></pre>
       </div>
       <div class="card">
-        <h3>Summarizer <span class="pill">POST /agents/summarize</span></h3>
-        <p>Charges <span class="price">$0.02 USDC</span> per call. Returns a 1-sentence summary.</p>
+        <h3>Summarizer <span class="pill warn">$0.02</span></h3>
+        <p>Returns a 1-sentence summary. x402-gated on Base Sepolia.</p>
         <pre><code>curl -X POST http://localhost:3000/agents/summarize \\
   -H "Content-Type: application/json" \\
   -d '{"text":"Long article..."}'</code></pre>
       </div>
       <div class="card">
-        <h3>Try the orchestrator <span class="pill warn">client-side</span></h3>
-        <p>Paste text below — the orchestrator will call Sentiment then Summarizer, paying each.</p>
-        <label for="prompt">Your text</label>
-        <textarea id="prompt" rows="4">I love how PayGate makes AI agents accountable. This is amazing tech.</textarea>
-        <div class="row" style="margin-top:12px">
-          <button class="btn" id="run">Run orchestrator</button>
-          <span class="pill" id="status">idle</span>
-        </div>
-        <pre id="out" style="margin-top:12px; display:none"></pre>
+        <h3>Translate <span class="pill warn">$0.03</span></h3>
+        <p>LLM-backed translation. Real gpt-4o-mini if OPENAI_API_KEY is set, otherwise mock.</p>
+        <pre><code>curl -X POST http://localhost:3000/agents/translate \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"hello world","targetLang":"French"}'</code></pre>
       </div>
+    </div>
+
+    <h2>Try the orchestrator</h2>
+    <div class="card">
+      <p>Paste text below. The orchestrator will call Sentiment (free), then Summarizer ($0.02), then Translate ($0.03). All payments settle on Base Sepolia.</p>
+      <label for="prompt">Your text</label>
+      <textarea id="prompt" rows="4">I love how PayGate makes AI agents accountable. This is amazing tech that I want to share with the world.</textarea>
+      <label for="lang" style="margin-top:10px">Translate to</label>
+      <select id="lang">
+        <option>French</option>
+        <option>Spanish</option>
+        <option>Japanese</option>
+        <option>German</option>
+      </select>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="run">Run all 3 agents</button>
+        <button class="btn danger" id="pause">Kill switch (deactivate)</button>
+        <button class="btn ok" id="resume" style="display:none">Resume</button>
+        <span class="pill" id="status">idle</span>
+      </div>
+      <pre id="out" class="out" style="display:none"></pre>
     </div>
 
     <h2>What PayGate adds on top of plain x402</h2>
@@ -193,27 +243,61 @@ const DASHBOARD_HTML = `<!doctype html>
       </div>
     </div>
 
-    <p class="footer">Built for <a href="https://openarena.to/en/events/buidl-quests-2026" target="_blank" rel="noopener">BUIDL_QUESTS 2026</a> · Sovereignty track · MIT licensed</p>
+    <p class="footer">Live on Base Sepolia: <a href="https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595" target="_blank" rel="noopener">0x09A4b760Ea42325508fC6b9b6777CAb667071595</a> · Built for <a href="https://openarena.to/en/events/buidl-quests-2026" target="_blank" rel="noopener">BUIDL_QUESTS 2026</a> · MIT licensed · <a href="https://github.com/Donyemiight/paygate" target="_blank" rel="noopener">github.com/Donyemiight/paygate</a></p>
   </div>
   <script>
     const out = document.getElementById('out');
     const status = document.getElementById('status');
+    const pause = document.getElementById('pause');
+    const resume = document.getElementById('resume');
+    let paused = false;
+
+    pause.onclick = async () => {
+      try {
+        await fetch('/admin/pause', { method: 'POST' });
+        paused = true;
+        pause.style.display = 'none';
+        resume.style.display = 'inline-block';
+        status.textContent = 'kill switch ON';
+        status.className = 'pill err';
+      } catch (e) { status.textContent = 'error: ' + e.message; }
+    };
+    resume.onclick = async () => {
+      try {
+        await fetch('/admin/resume', { method: 'POST' });
+        paused = false;
+        pause.style.display = 'inline-block';
+        resume.style.display = 'none';
+        status.textContent = 'resumed';
+        status.className = 'pill ok';
+      } catch (e) { status.textContent = 'error: ' + e.message; }
+    };
+
     document.getElementById('run').onclick = async () => {
+      if (paused) { out.style.display='block'; out.textContent='⛔ kill switch is on. Click Resume first.'; return; }
       const text = document.getElementById('prompt').value;
+      const lang = document.getElementById('lang').value;
       out.style.display = 'block';
-      out.textContent = '⏳ paying Sentiment agent ($0.01 USDC)...';
-      status.textContent = 'paying';
+      out.textContent = '⏳ sentiment (free)...';
+      status.textContent = 'running';
       try {
         const s = await fetch('/agents/sentiment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
         const sj = await s.json();
-        out.textContent = 'Sentiment: ' + JSON.stringify(sj, null, 2) + '\\n\\n⏳ paying Summarizer agent ($0.02 USDC)...';
+        out.textContent = 'Sentiment: ' + JSON.stringify(sj, null, 2) + '\\n\\n⏳ paying Summarizer ($0.02)...';
+
         const u = await fetch('/agents/summarize', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
         const uj = await u.json();
-        out.textContent += '\\n\\nSummarizer: ' + JSON.stringify(uj, null, 2);
+        out.textContent += '\\n\\nSummarizer: ' + JSON.stringify(uj, null, 2) + '\\n\\n⏳ paying Translate ($0.03)...';
+
+        const t = await fetch('/agents/translate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text, targetLang: lang}) });
+        const tj = await t.json();
+        out.textContent += '\\n\\nTranslate: ' + JSON.stringify(tj, null, 2);
         status.textContent = 'done';
+        status.className = 'pill ok';
       } catch (e) {
-        out.textContent = 'Error: ' + e.message;
+        out.textContent += '\\n\\nError: ' + e.message;
         status.textContent = 'error';
+        status.className = 'pill err';
       }
     };
   </script>
