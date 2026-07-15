@@ -9,6 +9,11 @@
     "start": "tsx src/server.ts",
     "build": "tsc"
   },
+  "imports": {
+    "@paygate/sdk": {
+      "import": "../sdk/src/index.ts"
+    }
+  },
   "dependencies": {
     "@paygate/sdk": "file:../sdk",
     "express": "^4.19.2",
