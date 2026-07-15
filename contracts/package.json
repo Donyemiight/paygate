@@ -1,0 +1,21 @@
+{
+  "name": "@paygate/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PayGate — Sovereign payment + identity layer for AI agents. Smart contracts on Base.",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network base"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "hardhat": "^2.22.0",
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {}
+}

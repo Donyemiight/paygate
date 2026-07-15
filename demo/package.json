@@ -1,0 +1,26 @@
+{
+  "name": "@paygate/demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PayGate end-to-end demo. Two AI agents (Sentiment & Summarizer) paying each other on Base Sepolia via x402 + ERC-8004.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@paygate/sdk": "file:../sdk",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "viem": "^2.21.0",
+    "x402": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}

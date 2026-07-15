@@ -1,0 +1,29 @@
+{
+  "name": "@paygate/sdk",
+  "version": "0.1.0",
+  "description": "PayGate — TypeScript SDK. Wrap any AI agent with x402 payments + ERC-8004 identity + on-chain reputation + a human-controlled kill switch.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "viem": "^2.21.0",
+    "x402": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
