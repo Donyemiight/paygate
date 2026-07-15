@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40" role="img" aria-label="PayGate mark">
+  <defs>
+    <linearGradient id="gm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c5cff"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="18" width="20" height="16" rx="2.5" fill="url(#gm)"/>
+  <path d="M14 18 V13 a6 6 0 0 1 12 0 V18" fill="none" stroke="url(#gm)" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="20" cy="26" r="1.8" fill="#0b0d12"/>
+</svg>

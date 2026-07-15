@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60" role="img" aria-label="PayGate">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c5cff"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+  <!-- lock icon -->
+  <g transform="translate(8, 12)">
+    <rect x="6" y="14" width="24" height="20" rx="3" fill="url(#g)"/>
+    <path d="M11 14 V8 a7 7 0 0 1 14 0 V14" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="18" cy="24" r="2.5" fill="#0b0d12"/>
+  </g>
+  <!-- text -->
+  <text x="44" y="38" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" font-weight="700" fill="#e7e9ee" letter-spacing="-0.5">Pay</text>
+  <text x="89" y="38" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" font-weight="700" fill="url(#g)" letter-spacing="-0.5">Gate</text>
+</svg>
