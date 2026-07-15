@@ -99,6 +99,7 @@ contract SpendingPolicy is ReentrancyGuard {
 
     function setAllowlist(address counterparty, bool allowed) external onlyOwner {
         _policy.allowlist[counterparty] = allowed;
+        if (allowed) _allowlistStrict = true;
         emit AllowlistUpdated(counterparty, allowed);
     }
 

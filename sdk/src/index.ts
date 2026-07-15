@@ -17,6 +17,7 @@
 export { wrap } from "./wrap.js";
 export { call } from "./call.js";
 export { register } from "./register.js";
+export { getAgentIdentity, getAgentReputation, encodeSubmitFeedback, ERC8004_BASE } from "./erc8004.js";
 export type {
   PayGateConfig,
   AgentRegistration,
@@ -25,4 +26,5 @@ export type {
   CallResult,
   Reputation,
 } from "./types.js";
+export type { AgentIdentity, AgentReputation } from "./erc8004.js";
 export { PayGateError, PolicyViolationError } from "./errors.js";

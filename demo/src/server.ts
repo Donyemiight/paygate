@@ -35,6 +35,7 @@ import cors from "cors";
 import { wrap } from "@paygate/sdk";
 import type { PayGateConfig } from "@paygate/sdk";
 import { translateHandler } from "./agents/translate.js";
+import { mountDirectory } from "./directory.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const RPC_URL = process.env.RPC_URL ?? "https://sepolia.base.org";
@@ -129,6 +130,9 @@ app.post("/agents/translate", translateAgentHandler);
 app.get("/", (_req, res) => {
   res.type("html").send(DASHBOARD_HTML);
 });
+
+// PayGate Directory — read on-chain registry, list all agents
+mountDirectory(app);
 
 app.listen(PORT, () => {
   console.log(`[PayGate demo] listening on http://localhost:${PORT}`);

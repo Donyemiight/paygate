@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PayGate — How It Fixes the 5 Known x402 Attacks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b0d12; --fg:#e7e9ee; --muted:#8b94a7; --accent:#7c5cff; --line:#1c2030; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--fg); background:var(--bg); background-image:radial-gradient(600px 400px at 50% 0%,rgba(124,92,255,.10),transparent); min-height:100vh; }
+    .wrap { max-width:920px; margin:0 auto; padding:64px 24px 96px; }
+    h1 { font-size:48px; line-height:1.05; margin:0 0 12px; letter-spacing:-.02em; }
+    h2 { font-size:24px; margin:48px 0 16px; }
+    h3 { font-size:18px; margin:24px 0 8px; }
+    .lede { font-size:19px; color:var(--muted); margin:0 0 32px; max-width:60ch; }
+    .pill { display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; background:rgba(124,92,255,.12); color:var(--accent); vertical-align:middle; }
+    a { color:var(--accent); }
+
+    .attack {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px;
+      margin: 16px 0;
+    }
+    .attack .header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .attack .num { font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .attack h3 { margin: 0; }
+    .attack .attack-desc { color: var(--err); }
+    .attack .fix-desc { color: var(--ok); }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .col { padding: 14px 16px; border-radius: 10px; }
+    .col.bad { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.20); }
+    .col.good { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.20); }
+    .col-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+    .col.bad .col-label { color: var(--err); }
+    .col.good .col-label { color: var(--ok); }
+
+    pre { background:#0a0c12; border:1px solid var(--line); border-radius:8px; padding:14px; overflow:auto; font-size:13px; line-height:1.5; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .footer { margin-top:64px; padding-top:32px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="pill">arXiv:2605.11781 — May 2026</span>
+    <h1>The 5 attacks on x402, and how PayGate fixes each one</h1>
+    <p class="lede">
+      In May 2026, researchers published a paper identifying 5 concrete attacks on the x402 agentic payment protocol. PayGate is designed against all 5. Here's the full breakdown.
+    </p>
+
+    <div class="attack">
+      <div class="header">
+        <div class="num">01</div>
+        <div>
+          <h3>Grant-before-settle</h3>
+          <div class="attack-desc">The server runs the work BEFORE the on-chain payment is confirmed. A client receives 200 without paying.</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col bad">
+          <div class="col-label">❌ Vanilla x402</div>
+          <pre><code>// 1. server returns 402 with payment reqs
+// 2. client retries with payment
+// 3. server runs handler IMMEDIATELY
+// 4. server calls /settle
+// ← race: client cancels the payment tx
+//    but server already responded 200</code></pre>
+        </div>
+        <div class="col good">
+          <div class="col-label">✓ PayGate</div>
+          <pre><code>// 1. server returns 402 with payment reqs
+// 2. client retries with payment
+// 3. server calls /settle and AWAITS
+//    the on-chain receipt
+// 4. server runs handler ONLY after
+//    receipt is confirmed
+// → no race; no unpaid work</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="attack">
+      <div class="header">
+        <div class="num">02</div>
+        <div>
+          <h3>Missing resource-identifier binding</h3>
+          <div class="attack-desc">A client pays for resource A but the server hands back resource B. No on-chain link between payment and resource.</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col bad">
+          <div class="col-label">❌ Vanilla x402</div>
+          <pre><code>// 402 response is generic
+{
+  "accepts": [{
+    "scheme": "exact",
+    "maxAmountRequired": "100"
+  }]
+}
+// No link to which endpoint,
+// which resource, which params
+// → easy to substitute</code></pre>
+        </div>
+        <div class="col good">
+          <div class="col-label">✓ PayGate</div>
+          <pre><code>// PayGate's 402 includes the
+// resource path in payment reqs
+{
+  "accepts": [{
+    "scheme": "exact",
+    "resource": "/agents/sentiment",
+    "maxAmountRequired": "10000"
+  }]
+}
+// resource is bound into the
+// EIP-3009 authorization
+// → can't be substituted</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="attack">
+      <div class="header">
+        <div class="num">03</div>
+        <div>
+          <h3>Fire-and-forget settlement</h3>
+          <div class="attack-desc">The server claims it settled but the on-chain settlement actually fails or is never made. The service runs anyway.</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col bad">
+          <div class="col-label">❌ Vanilla x402</div>
+          <pre><code>// handler runs first
+const result = await handler(input);
+// settle in background, fire-and-forget
+fetch(facilitator + "/settle", { ... });
+// client already got 200
+// if /settle fails, no one notices
+res.json(result);</code></pre>
+        </div>
+        <div class="col good">
+          <div class="col-label">✓ PayGate</div>
+          <pre><code>// settle SYNCHRONOUSLY
+const r = await fetch(facilitator + "/settle", { ... });
+if (!r.ok) throw new SettlementError();
+// await on-chain receipt
+const receipt = await publicClient
+  .waitForTransactionReceipt({ hash: r.tx });
+// only NOW run the handler
+const result = await handler(input);
+res.json(result);</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="attack">
+      <div class="header">
+        <div class="num">04</div>
+        <div>
+          <h3>Missing Cache-Control headers</h3>
+          <div class="attack-desc">A 402 response gets cached by an intermediate proxy. The client never sees the payment requirements and the service runs once with no payment.</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col bad">
+          <div class="col-label">❌ Vanilla x402</div>
+          <pre><code>// 402 response sent
+res.status(402).json({
+  accepts: [...]
+});
+// no Cache-Control header
+// → browser/proxy may cache
+// → second call gets stale
+//    "no payment needed" response</code></pre>
+        </div>
+        <div class="col good">
+          <div class="col-label">✓ PayGate</div>
+          <pre><code>res.status(402);
+res.setHeader("Cache-Control",
+              "no-store");
+res.setHeader("Pragma", "no-cache");
+res.json({
+  accepts: [...]
+});
+// no-store is also on the
+// 200 response — every response
+// is dynamic</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="attack">
+      <div class="header">
+        <div class="num">05</div>
+        <div>
+          <h3>Replay</h3>
+          <div class="attack-desc">A client reuses a single payment authorization to call the endpoint multiple times. One payment → many services.</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col bad">
+          <div class="col-label">❌ Vanilla x402</div>
+          <pre><code>// no server-side tracking
+// of used authorizations
+// EIP-3009 nonce is single-use
+// per USDC contract, but
+// no per-resource tracking
+// → if multiple endpoints
+//   accept the same payment
+//   scheme, replays are possible</code></pre>
+        </div>
+        <div class="col good">
+          <div class="col-label">✓ PayGate</div>
+          <pre><code>// 3 layers of defense:
+// 1. EIP-3009 nonce (USDC contract)
+// 2. PayGate SpendingPolicy:
+//    epoch counter increments
+//    on every recordSpend
+// 3. Per-call limit: even if
+//    the nonce is reused, the
+//    per-call cap blocks it
+// → no successful replay</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h2>Beyond the 5 attacks</h2>
+    <p>
+      PayGate also adds three primitives that x402 itself doesn't have:
+    </p>
+    <ul>
+      <li><strong>ERC-8004 identity</strong> — every PayGate agent links to a portable on-chain handle on Base</li>
+      <li><strong>On-chain spending policy</strong> — per-call cap, per-epoch cap, allowlist, enforced by the contract (not the SDK)</li>
+      <li><strong>Kill switch</strong> — one transaction pauses the agent. No admin key, no race condition.</li>
+    </ul>
+
+    <div class="footer">
+      <p>
+        PayGate is open source (MIT) and live on Base Sepolia.
+        <a href="https://github.com/Donyemiight/paygate">View on GitHub</a> ·
+        <a href="https://sepolia.basescan.org/address/0x09A4b760Ea42325508fC6b9b6777CAb667071595">View contract on BaseScan</a> ·
+        <a href="https://arxiv.org/abs/2605.11781">arXiv:2605.11781</a>
+      </p>
+      <p>Built for BUIDL_QUESTS 2026 · Sovereignty track</p>
+    </div>
+  </div>
+</body>
+</html>
