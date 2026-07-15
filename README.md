@@ -183,4 +183,4 @@ MIT — see [LICENSE](./LICENSE).
 
 - Repo: https://github.com/Donyemiight/paygate
 - Hackathon: BUIDL_QUESTS 2026, Sovereignty track
-- Built by: O.A Dolapo
+- Built by: Donyemiight

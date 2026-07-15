@@ -113,7 +113,7 @@ Per BUIDL_QUESTS 2026 docs: "OKX AI Internal Review" — product quality, use ca
 - **Contract on Base Sepolia:** [`0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A`](https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A)
 - **BUIDL_QUESTS 2026 page:** https://openarena.to/en/events/buidl-quests-2026
 - **Open issues for security:** https://github.com/Donyemiight/paygate/issues
-- **Author:** O.A Dolapo
+- **Author:** Donyemiight
 
 ## Supporting documents
 

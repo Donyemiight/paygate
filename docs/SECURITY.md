@@ -1,7 +1,7 @@
 # PayGate — Security Writeup
 
 > Prepared for BUIDL_QUESTS 2026, co-sponsored by Halborn Security.
-> Author: O.A Dolapo · Last updated: 2026-07-15
+> Author: Donyemiight · Last updated: 2026-07-15
 
 ## Executive summary
 

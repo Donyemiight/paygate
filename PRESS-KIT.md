@@ -38,7 +38,7 @@ PayGate is an open-source project that adds three missing primitives to the x402
 ### On the problem
 
 > "x402 lets agents pay each other, but it has no concept of who is paying, how much they're allowed to spend, or how to stop them. A compromised agent can drain its owner's wallet."
-> — O.A Dolapo, project lead
+> — Donyemiight, project lead
 
 > "Last month, researchers identified 5 concrete attacks on x402. Every agent built today is vulnerable to at least one of them."
 > — citing arXiv:2605.11781
@@ -46,15 +46,15 @@ PayGate is an open-source project that adds three missing primitives to the x402
 ### On the solution
 
 > "PayGate is the only x402 wrapper where the spending policy is enforced by the contract, not the SDK. A compromised agent cannot bypass it."
-> — O.A Dolapo
+> — Donyemiight
 
 > "We compose with ERC-8004 instead of competing with it. The 17,600+ agents already on Base can adopt PayGate without re-registering."
-> — O.A Dolapo
+> — Donyemiight
 
 ### On the kill switch
 
 > "The kill switch is one transaction, irreversible, and has no admin key. The owner always wins. That's the only way the agent economy can work at scale."
-> — O.A Dolapo
+> — Donyemiight
 
 ## Visuals to use in articles
 

@@ -67,7 +67,7 @@ The video (3 min, screen recording + voiceover) shows: register → set policy �
 
 ## 7. Team
 
-Solo founder. O.A Dolapo. AI agent builder with prior shipped work:
+Solo founder. Donyemiight. AI agent builder with prior shipped work:
 - **ReppS** (https://repps.xyz) — adversarial pre-flight layer for AI agents, OKX AI Genesis Hackathon submission
 - **VibeCast** (https://vibecast-ptrq.onrender.com) — YouTube-to-thread generator, x402 v2 service
 - **LCP RiskGuard** (https://networkbike.github.io/lcp-riskguard-agent/) — agent service for liquidity stress monitoring

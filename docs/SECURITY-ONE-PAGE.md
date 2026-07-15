@@ -1,6 +1,6 @@
 ---
 title: "PayGate — Security One-Pager"
-author: "O.A Dolapo"
+author: "Donyemiight"
 date: "2026-07-15"
 geometry: margin=0.75in
 fontsize: 9pt
