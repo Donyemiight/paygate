@@ -1,0 +1,24 @@
+{
+  "name": "@paygate/mcp",
+  "version": "0.1.0",
+  "description": "PayGate MCP server — exposes PayGate functions (register, status, kill switch) as tools for Claude / Cursor / any MCP-compatible agent.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/server.js",
+  "bin": {
+    "paygate-mcp": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}
