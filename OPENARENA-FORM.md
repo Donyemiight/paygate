@@ -70,6 +70,8 @@ https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 
 If you don't have a video yet, submit with this placeholder and update the form field after you record. OpenArena allows editing submissions up to the deadline.
 
+> **Note on video length:** The official BUIDL_QUESTS 2026 page does NOT specify a max video length. Target **90–120 seconds** to match the `DEMO-SCRIPT.md` (2-minute version). Comparable 2026 hackathons (ETHGlobal BuildQuest 2–4 min, Polygon BUIDL IT 3–5 min, Areon < 5 min) suggest 2–4 min is the safe range. **If the actual submission form shows a max length field, respect it.**
+
 ## Field 8: Built with
 ```
 Solidity 0.8.24, OpenZeppelin 5, Hardhat, TypeScript, viem, x402 v2, Express, Base Sepolia, ERC-8004, EIP-3009
