@@ -43,7 +43,9 @@ export function mountDirectory(app: express.Express) {
       } as any)) as bigint;
 
       const agents = [];
-      for (let i = 1; i < Number(nextId); i++) {
+      // nextAgentId is the NEXT id to be assigned (not the count). So we iterate 1..nextId inclusive.
+      // If nextAgentId == 0, no agents. If nextAgentId == 1, agent #1 exists.
+      for (let i = 1; i <= Number(nextId); i++) {
         try {
           const b = (await publicClient.readContract({
             address: REGISTRY,
@@ -127,6 +129,83 @@ export function mountDirectory(app: express.Express) {
 
   app.get("/directory", (_req, res) => {
     res.type("html").send(DIRECTORY_HTML);
+  });
+
+  // Single-agent detail endpoint: /api/agents/:id
+  app.get("/api/agents/:id", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ error: "invalid agentId" });
+      }
+      const b = (await publicClient.readContract({
+        address: REGISTRY,
+        abi: [
+          {
+            name: "getBinding",
+            type: "function",
+            stateMutability: "view",
+            inputs: [{ name: "agentId", type: "uint256" }],
+            outputs: [
+              { name: "erc8004AgentId", type: "uint256" },
+              { name: "agentWallet", type: "address" },
+              { name: "policy", type: "address" },
+              { name: "humanOwner", type: "address" },
+              { name: "metadataURI", type: "string" },
+              { name: "active", type: "bool" },
+            ],
+          },
+        ],
+        functionName: "getBinding",
+        args: [BigInt(id)],
+      } as any)) as readonly [bigint, string, string, string, string, boolean];
+
+      // 0x0 humanOwner means the slot is empty
+      if (b[3] === "0x0000000000000000000000000000000000000000") {
+        return res.status(404).json({ error: "agent not found", agentId: id });
+      }
+
+      const pol = (await publicClient.readContract({
+        address: b[2] as `0x${string}`,
+        abi: [
+          {
+            name: "getPolicy",
+            type: "function",
+            stateMutability: "view",
+            inputs: [],
+            outputs: [
+              { name: "perCallLimit", type: "uint128" },
+              { name: "perEpochLimit", type: "uint128" },
+              { name: "epochDuration", type: "uint64" },
+              { name: "epochSpent", type: "uint128" },
+              { name: "paused", type: "bool" },
+            ],
+          },
+        ],
+        functionName: "getPolicy",
+      } as any).catch(() => null)) as readonly [bigint, bigint, bigint, bigint, boolean] | null;
+
+      res.json({
+        paygateAgentId: id,
+        erc8004AgentId: b[0].toString(),
+        agentWallet: b[1],
+        policy: b[2],
+        humanOwner: b[3],
+        metadataURI: b[4],
+        active: b[5],
+        policyState: pol
+          ? {
+              perCallLimit: pol[0].toString(),
+              perEpochLimit: pol[1].toString(),
+              epochDuration: pol[2].toString(),
+              epochSpent: pol[3].toString(),
+              paused: pol[4],
+            }
+          : null,
+      });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
   });
 }
 

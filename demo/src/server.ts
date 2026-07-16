@@ -36,6 +36,9 @@ import { wrap } from "@paygate/sdk";
 import type { PayGateConfig } from "@paygate/sdk";
 import { translateHandler } from "./agents/translate.js";
 import { mountDirectory } from "./directory.js";
+import { createWalletClient, http, createPublicClient } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { base, baseSepolia } from "viem/chains";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const RPC_URL = process.env.RPC_URL ?? "https://sepolia.base.org";
@@ -46,8 +49,10 @@ const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${s
 const AGENT_PRIVATE_KEY = (process.env.AGENT_PRIVATE_KEY ??
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80") as `0x${string}`;
 
-const OWNER_ADDRESS = (process.env.OWNER_ADDRESS ??
-  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266") as `0x${string}`;
+// Derive the signer address from the key so it can never be inconsistent.
+// If OWNER_ADDRESS is explicitly set in env, we trust that — but we still log both for sanity.
+const SIGNER_ADDRESS = privateKeyToAccount(AGENT_PRIVATE_KEY).address;
+const OWNER_ADDRESS = (process.env.OWNER_ADDRESS ?? SIGNER_ADDRESS) as `0x${string}`;
 
 const config: PayGateConfig = {
   agentPrivateKey: AGENT_PRIVATE_KEY,
@@ -109,8 +114,25 @@ app.get("/health", (_req, res) => {
     paygate: true,
     chain: "base-sepolia",
     registry: REGISTRY_ADDRESS,
+    signer: SIGNER_ADDRESS,
+    ownerAddress: OWNER_ADDRESS,
     openai: Boolean(process.env.OPENAI_API_KEY),
     agents: ["sentiment (free)", "summarize ($0.02)", "translate ($0.03)"],
+    routes: [
+      "/health",
+      "/",
+      "/.well-known/x402",
+      "/agent-card.json",
+      "/directory",
+      "/api/agents",
+      "/api/agents/:id",
+      "/admin/status",
+      "/agents/sentiment (POST)",
+      "/agents/summarize (POST)",
+      "/agents/translate (POST)",
+      "/admin/pause (POST)",
+      "/admin/resume (POST)",
+    ],
   });
 });
 
@@ -139,6 +161,201 @@ app.get("/skill.md", (_req, res) => {
   res.type("text/markdown").send(SKILL_MD);
 });
 
+// x402 v2 manifest at /.well-known/x402 — canonical discovery endpoint
+app.get("/.well-known/x402", (_req, res) => {
+  res.json({
+    x402Version: 2,
+    name: "paygate-demo",
+    description: "PayGate demo — three x402-protected agents on Base Sepolia with on-chain spending policy and kill switch.",
+    homepage: "https://github.com/Donyemiight/paygate",
+    registry: REGISTRY_ADDRESS,
+    chain: "base-sepolia",
+    chainId: 84532,
+    usdc: USDC_BASE_SEPOLIA,
+    facilitator: FACILITATOR_URL,
+    services: [
+      {
+        path: "/agents/sentiment",
+        method: "POST",
+        priceUSDC: "0",
+        description: "Sentiment analysis. Free, no x402.",
+        input: { text: "string" },
+        output: { sentiment: "positive|negative|neutral", score: "number", length: "number" },
+      },
+      {
+        path: "/agents/summarize",
+        method: "POST",
+        priceUSDC: "20000",
+        description: "Text summarization. x402-gated.",
+        input: { text: "string" },
+        output: { summary: "string", originalLength: "number" },
+      },
+      {
+        path: "/agents/translate",
+        method: "POST",
+        priceUSDC: "30000",
+        description: "Translate text. x402-gated.",
+        input: { text: "string", targetLang: "string" },
+        output: { translation: "string", sourceLang: "string", targetLang: "string", model: "string" },
+      },
+    ],
+    paygate: {
+      perCallCap: "$0.10",
+      perEpochCap: "$1.00",
+      epochDuration: "24h",
+      killSwitch: "POST /admin/pause",
+      resume: "POST /admin/resume",
+    },
+  });
+});
+
+// x402 v2 agent card — standard discovery format
+app.get("/agent-card.json", (_req, res) => {
+  res.json({
+    name: "PayGate Demo Agents",
+    version: "0.1.0",
+    description: "Three AI agents (Sentiment, Summarizer, Translate) wrapped in PayGate on-chain spending policy + kill switch. x402 v2 on Base Sepolia.",
+    author: "Donyemiight",
+    license: "MIT",
+    homepage: "https://github.com/Donyemiight/paygate",
+    demo: "https://paygate-demo.onrender.com",
+    endpoints: [
+      { path: "/agents/sentiment", method: "POST", priceUSDC: 0, auth: "none" },
+      { path: "/agents/summarize", method: "POST", priceUSDC: 20000, auth: "x402" },
+      { path: "/agents/translate", method: "POST", priceUSDC: 30000, auth: "x402" },
+    ],
+    settlement: {
+      network: "base-sepolia",
+      chainId: 84532,
+      asset: USDC_BASE_SEPOLIA,
+      facilitator: FACILITATOR_URL,
+      scheme: "exact",
+    },
+    identity: {
+      registry: REGISTRY_ADDRESS,
+      erc8004: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    },
+  });
+});
+
+// Admin: kill switch endpoints. The deployer key is also the humanOwner (0xb859...c7EF),
+// so we can call registry.deactivate() and registry.reactivate() directly from the demo.
+const ADMIN_ABI = [
+  {
+    name: "deactivate",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "agentId", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    name: "reactivate",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "agentId", type: "uint256" }],
+    outputs: [],
+  },
+] as const;
+
+async function ownerCall(functionName: "deactivate" | "reactivate") {
+  const account = privateKeyToAccount(AGENT_PRIVATE_KEY);
+  const chain = config.chainId === 8453 ? base : baseSepolia;
+  const wallet = createWalletClient({ account, chain, transport: http(config.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(config.rpcUrl) });
+
+  // For the demo we only have one agent (#1). In production we'd look it up by owner.
+  const agentId = 1n;
+  const txHash = await wallet.writeContract({
+    address: config.registryAddress,
+    abi: ADMIN_ABI,
+    functionName,
+    args: [agentId],
+    account,
+  });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+  return { txHash, status: receipt.status, agentId: agentId.toString() };
+}
+
+app.post("/admin/pause", async (_req, res) => {
+  try {
+    const out = await ownerCall("deactivate");
+    res.json({ ok: true, action: "deactivate", ...out });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+app.post("/admin/resume", async (_req, res) => {
+  try {
+    const out = await ownerCall("reactivate");
+    res.json({ ok: true, action: "reactivate", ...out });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// Get current kill-switch state
+app.get("/admin/status", async (_req, res) => {
+  try {
+    const publicClient = createPublicClient({ chain: baseSepolia, transport: http(config.rpcUrl) });
+    const binding = (await publicClient.readContract({
+      address: config.registryAddress,
+      abi: [
+        {
+          name: "getBinding",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "agentId", type: "uint256" }],
+          outputs: [
+            { name: "erc8004AgentId", type: "uint256" },
+            { name: "agentWallet", type: "address" },
+            { name: "policy", type: "address" },
+            { name: "humanOwner", type: "address" },
+            { name: "metadataURI", type: "string" },
+            { name: "active", type: "bool" },
+          ],
+        },
+      ],
+      functionName: "getBinding",
+      args: [1n],
+    } as any)) as readonly [bigint, string, string, string, string, boolean];
+
+    const pol = (await publicClient.readContract({
+      address: binding[2] as `0x${string}`,
+      abi: [
+        {
+          name: "getPolicy",
+          type: "function",
+          stateMutability: "view",
+          inputs: [],
+          outputs: [
+            { name: "perCallLimit", type: "uint128" },
+            { name: "perEpochLimit", type: "uint128" },
+            { name: "epochDuration", type: "uint64" },
+            { name: "epochSpent", type: "uint128" },
+            { name: "paused", type: "bool" },
+          ],
+        },
+      ],
+      functionName: "getPolicy",
+    } as any)) as readonly [bigint, bigint, bigint, bigint, boolean];
+
+    res.json({
+      agentId: 1,
+      active: binding[5],
+      paused: pol[4],
+      policy: binding[2],
+      agentWallet: binding[1],
+      humanOwner: binding[3],
+      perCallLimit: pol[0].toString(),
+      perEpochLimit: pol[1].toString(),
+      epochSpent: pol[3].toString(),
+    });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
 // PayGate Directory — read on-chain registry, list all agents
 mountDirectory(app);
 
@@ -146,6 +363,10 @@ app.listen(PORT, () => {
   console.log(`[PayGate demo] listening on http://localhost:${PORT}`);
   console.log(`[PayGate demo] registry=${REGISTRY_ADDRESS} chain=base-sepolia`);
   console.log(`[PayGate demo] openai=${Boolean(process.env.OPENAI_API_KEY) ? "live" : "mock"}`);
+  console.log(`[PayGate demo] signer=${SIGNER_ADDRESS}`);
+  if (SIGNER_ADDRESS.toLowerCase() !== OWNER_ADDRESS.toLowerCase()) {
+    console.warn(`[PayGate demo] WARNING: SIGNER (${SIGNER_ADDRESS}) != OWNER_ADDRESS (${OWNER_ADDRESS}). The kill switch may not work for the registered agent.`);
+  }
 });
 
 const DASHBOARD_HTML = `<!doctype html>
@@ -255,7 +476,15 @@ const DASHBOARD_HTML = `<!doctype html>
       </div>
     </div>
 
-    <p class="footer">Live on Base Sepolia: <a href="https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A" target="_blank" rel="noopener">0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A</a> · Built for <a href="https://openarena.to/en/events/buidl-quests-2026" target="_blank" rel="noopener">BUIDL_QUESTS 2026</a> · MIT licensed · <a href="https://github.com/Donyemiight/paygate" target="_blank" rel="noopener">github.com/Donyemiight/paygate</a></p>
+    <p class="footer">
+      Live on Base Sepolia: <a href="https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A" target="_blank" rel="noopener">0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A</a>
+      · <a href="/.well-known/x402" target="_blank" rel="noopener">x402 manifest</a>
+      · <a href="/agent-card.json" target="_blank" rel="noopener">agent card</a>
+      · <a href="/directory" target="_blank" rel="noopener">on-chain directory</a>
+      · <a href="/api/agents" target="_blank" rel="noopener">/api/agents (JSON)</a>
+      · <a href="https://openarena.to/en/events/buidl-quests-2026" target="_blank" rel="noopener">BUIDL_QUESTS 2026</a>
+      · <a href="https://github.com/Donyemiight/paygate" target="_blank" rel="noopener">github</a>
+    </p>
   </div>
   <script>
     const out = document.getElementById('out');
@@ -264,26 +493,70 @@ const DASHBOARD_HTML = `<!doctype html>
     const resume = document.getElementById('resume');
     let paused = false;
 
-    pause.onclick = async () => {
+    // Read live state from /admin/status on page load so the UI shows the real on-chain truth
+    async function refreshStatus() {
       try {
-        await fetch('/admin/pause', { method: 'POST' });
-        paused = true;
-        pause.style.display = 'none';
-        resume.style.display = 'inline-block';
-        status.textContent = 'kill switch ON';
-        status.className = 'pill err';
-      } catch (e) { status.textContent = 'error: ' + e.message; }
+        const r = await fetch('/admin/status');
+        const j = await r.json();
+        paused = !!j.paused;
+        if (paused) {
+          pause.style.display = 'none';
+          resume.style.display = 'inline-block';
+          status.textContent = 'kill switch ON';
+          status.className = 'pill err';
+        } else {
+          pause.style.display = 'inline-block';
+          resume.style.display = 'none';
+          status.textContent = 'agent active';
+          status.className = 'pill ok';
+        }
+      } catch (e) { /* ignore */ }
+    }
+    refreshStatus();
+
+    pause.onclick = async () => {
+      status.textContent = 'pausing…';
+      status.className = 'pill warn';
+      try {
+        const r = await fetch('/admin/pause', { method: 'POST' });
+        const j = await r.json();
+        if (j.ok) {
+          paused = true;
+          pause.style.display = 'none';
+          resume.style.display = 'inline-block';
+          status.textContent = 'kill switch ON · tx ' + j.txHash.slice(0, 10) + '…';
+          status.className = 'pill err';
+        } else {
+          status.textContent = 'error: ' + (j.error || 'unknown');
+          status.className = 'pill err';
+        }
+      } catch (e) { status.textContent = 'error: ' + e.message; status.className = 'pill err'; }
     };
     resume.onclick = async () => {
+      status.textContent = 'resuming…';
+      status.className = 'pill warn';
       try {
-        await fetch('/admin/resume', { method: 'POST' });
-        paused = false;
-        pause.style.display = 'inline-block';
-        resume.style.display = 'none';
-        status.textContent = 'resumed';
-        status.className = 'pill ok';
-      } catch (e) { status.textContent = 'error: ' + e.message; }
+        const r = await fetch('/admin/resume', { method: 'POST' });
+        const j = await r.json();
+        if (j.ok) {
+          paused = false;
+          pause.style.display = 'inline-block';
+          resume.style.display = 'none';
+          status.textContent = 'resumed · tx ' + j.txHash.slice(0, 10) + '…';
+          status.className = 'pill ok';
+        } else {
+          status.textContent = 'error: ' + (j.error || 'unknown');
+          status.className = 'pill err';
+        }
+      } catch (e) { status.textContent = 'error: ' + e.message; status.className = 'pill err'; }
     };
+
+    async function callAgent(name, url, body) {
+      const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const j = await r.json();
+      const header = r.status === 402 ? '⛔ 402 Payment Required — x402' : (r.ok ? '✓ ' + r.status : '✗ ' + r.status);
+      return { name, status: r.status, header, body: j };
+    }
 
     document.getElementById('run').onclick = async () => {
       if (paused) { out.style.display='block'; out.textContent='⛔ kill switch is on. Click Resume first.'; return; }
@@ -292,20 +565,20 @@ const DASHBOARD_HTML = `<!doctype html>
       out.style.display = 'block';
       out.textContent = '⏳ sentiment (free)...';
       status.textContent = 'running';
+      status.className = 'pill warn';
       try {
-        const s = await fetch('/agents/sentiment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
-        const sj = await s.json();
-        out.textContent = 'Sentiment: ' + JSON.stringify(sj, null, 2) + '\\n\\n⏳ paying Summarizer ($0.02)...';
+        const s = await callAgent('Sentiment', '/agents/sentiment', { text });
+        out.textContent = s.header + '  ' + s.name + ': ' + JSON.stringify(s.body, null, 2) + '\\n\\n⏳ Summarizer ($0.02)...';
+        const u = await callAgent('Summarizer', '/agents/summarize', { text });
+        out.textContent += '\\n\\n' + u.header + '  ' + u.name + ': ' + JSON.stringify(u.body, null, 2) + '\\n\\n⏳ Translate ($0.03)...';
+        const t = await callAgent('Translate', '/agents/translate', { text, targetLang: lang });
+        out.textContent += '\\n\\n' + t.header + '  ' + t.name + ': ' + JSON.stringify(t.body, null, 2);
 
-        const u = await fetch('/agents/summarize', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
-        const uj = await u.json();
-        out.textContent += '\\n\\nSummarizer: ' + JSON.stringify(uj, null, 2) + '\\n\\n⏳ paying Translate ($0.03)...';
-
-        const t = await fetch('/agents/translate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text, targetLang: lang}) });
-        const tj = await t.json();
-        out.textContent += '\\n\\nTranslate: ' + JSON.stringify(tj, null, 2);
-        status.textContent = 'done';
-        status.className = 'pill ok';
+        const allOk = s.status === 200 && u.status === 200 && t.status === 200;
+        const some402 = s.status === 402 || u.status === 402 || t.status === 402;
+        if (allOk) { status.textContent = 'done'; status.className = 'pill ok'; }
+        else if (some402) { status.textContent = 'paid agents returned 402 (no wallet signed)'; status.className = 'pill warn'; }
+        else { status.textContent = 'error'; status.className = 'pill err'; }
       } catch (e) {
         out.textContent += '\\n\\nError: ' + e.message;
         status.textContent = 'error';

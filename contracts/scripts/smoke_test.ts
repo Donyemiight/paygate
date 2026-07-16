@@ -18,7 +18,7 @@
 
 import { ethers } from "hardhat";
 
-const REGISTRY = process.env.REGISTRY_ADDRESS ?? "0x571F26C1d470B4528271b1e18511E03409726883";
+const REGISTRY = process.env.REGISTRY_ADDRESS ?? "0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
