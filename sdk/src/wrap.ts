@@ -90,8 +90,10 @@ export function wrap<Input = unknown, Output = unknown>(
         } as any)) as bigint;
 
         // For the demo, agent #1 is always our agent. In production, look up by owner.
+        // nextAgentId is the next id to assign; valid ids are 1..nextAgentId inclusive
+        // (because register() does ++nextAgentId first, so nextAgentId==1 means id #1 exists).
         const agentId = 1n;
-        if (agentId < nextId) {
+        if (nextId > 0n && agentId <= nextId) {
           const binding = (await publicClient.readContract({
             address: config.registryAddress,
             abi: [
