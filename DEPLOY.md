@@ -59,7 +59,7 @@ forge create --rpc-url https://sepolia.base.org \
 import { register } from "@paygate/sdk";
 
 const reg = await register({
-  registryAddress: "0x571F26C1d470B4528271b1e18511E03409726883",
+  registryAddress: "0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A",
   // ... other config
 }, {
   perCallLimit: 100_000n,   // $0.10
