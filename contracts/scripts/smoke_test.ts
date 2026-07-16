@@ -97,11 +97,13 @@ async function main() {
   console.log(`\n[7] testing kill switch (deactivate → reactivate) ...`);
   const txDeact = await registry.deactivate(agentId);
   await txDeact.wait();
+  await new Promise((r) => setTimeout(r, 2000)); // let the RPC node catch up to latest state
   const c5 = await policy.canSpend(50_000n, ethers.ZeroAddress);
   console.log(`    after deactivate: canSpend = ${c5}  (expected false)`);
 
   const txReact = await registry.reactivate(agentId);
   await txReact.wait();
+  await new Promise((r) => setTimeout(r, 2000)); // let the RPC node catch up
   const c6 = await policy.canSpend(50_000n, ethers.ZeroAddress);
   console.log(`    after reactivate: canSpend = ${c6}  (expected true)`);
 
