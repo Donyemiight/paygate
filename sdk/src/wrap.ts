@@ -21,6 +21,7 @@
  *   - Use Cache-Control: no-store on the 402 response.
  */
 
+import { http } from "viem";
 import type { Handler, PayGateConfig, WrappedHandler } from "./types.js";
 import { PolicyViolationError, SettlementError } from "./errors.js";
 
