@@ -554,7 +554,15 @@ const DASHBOARD_HTML = `<!doctype html>
     async function callAgent(name, url, body) {
       const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       const j = await r.json();
-      const header = r.status === 402 ? '⛔ 402 Payment Required — x402' : (r.ok ? '✓ ' + r.status : '✗ ' + r.status);
+      let header = r.status === 402 ? '⛔ 402 Payment Required — x402' : (r.ok ? '✓ ' + r.status : '✗ ' + r.status);
+      // If 402 and we got a paygate status from the response, surface the kill-switch state
+      if (r.status === 402 && j.paygate) {
+        if (j.paygate.paused) {
+          header = '⛔ KILL SWITCH ON (tx would revert)';
+        } else {
+          header = '⛔ 402 — ' + j.paygate.killSwitch + ' · ' + (Number(j.paygate.epochSpent)/1e6).toFixed(2) + ' spent of ' + (Number(j.paygate.perEpochLimit)/1e6).toFixed(2) + ' epoch cap';
+        }
+      }
       return { name, status: r.status, header, body: j };
     }
 

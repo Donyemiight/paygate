@@ -71,6 +71,84 @@ export function wrap<Input = unknown, Output = unknown>(
       // No payment — return 402 with payment requirements
       res.status(402);
       res.setHeader("Cache-Control", "no-store");
+
+      // Read the current policy state so the caller knows if the agent is paused.
+      // Best-effort: if the read fails (e.g. RPC down), skip the extra fields.
+      let paygateStatus: Record<string, unknown> | undefined;
+      try {
+        const { createPublicClient } = await import("viem");
+        const { base, baseSepolia } = await import("viem/chains");
+        const chain = config.chainId === 8453 ? base : baseSepolia;
+        const publicClient = createPublicClient({ chain, transport: http(config.rpcUrl) });
+
+        const nextId = (await publicClient.readContract({
+          address: config.registryAddress,
+          abi: [
+            { name: "nextAgentId", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+          ],
+          functionName: "nextAgentId",
+        } as any)) as bigint;
+
+        // For the demo, agent #1 is always our agent. In production, look up by owner.
+        const agentId = 1n;
+        if (agentId < nextId) {
+          const binding = (await publicClient.readContract({
+            address: config.registryAddress,
+            abi: [
+              {
+                name: "getBinding",
+                type: "function",
+                stateMutability: "view",
+                inputs: [{ name: "agentId", type: "uint256" }],
+                outputs: [
+                  { name: "erc8004AgentId", type: "uint256" },
+                  { name: "agentWallet", type: "address" },
+                  { name: "policy", type: "address" },
+                  { name: "humanOwner", type: "address" },
+                  { name: "metadataURI", type: "string" },
+                  { name: "active", type: "bool" },
+                ],
+              },
+            ],
+            functionName: "getBinding",
+            args: [agentId],
+          } as any)) as readonly [bigint, string, string, string, string, boolean];
+
+          if (binding[2] !== "0x0000000000000000000000000000000000000000") {
+            const pol = (await publicClient.readContract({
+              address: binding[2] as `0x${string}`,
+              abi: [
+                {
+                  name: "getPolicy",
+                  type: "function",
+                  stateMutability: "view",
+                  inputs: [],
+                  outputs: [
+                    { name: "perCallLimit", type: "uint128" },
+                    { name: "perEpochLimit", type: "uint128" },
+                    { name: "epochDuration", type: "uint64" },
+                    { name: "epochSpent", type: "uint128" },
+                    { name: "paused", type: "bool" },
+                  ],
+                },
+              ],
+              functionName: "getPolicy",
+            } as any)) as readonly [bigint, bigint, bigint, bigint, boolean];
+
+            paygateStatus = {
+              active: binding[5],
+              paused: pol[4],
+              perCallLimit: pol[0].toString(),
+              perEpochLimit: pol[1].toString(),
+              epochSpent: pol[3].toString(),
+              killSwitch: pol[4] ? "AGENT_PAUSED" : "ACTIVE",
+            };
+          }
+        }
+      } catch {
+        // best-effort
+      }
+
       res.json({
         x402Version: 2,
         accepts: [
@@ -86,6 +164,7 @@ export function wrap<Input = unknown, Output = unknown>(
             extra: { name: "USD Coin", version: "2" },
           },
         ],
+        ...(paygateStatus ? { paygate: paygateStatus } : {}),
       });
       return;
     }
