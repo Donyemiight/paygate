@@ -63,7 +63,7 @@ Two agents on Base Sepolia:
 
 Plus a `/` dashboard with the kill switch and live policy state. Call the agent without payment → 402 with payment requirements. Call with PayGate SDK → 200 + settlement tx on BaseScan.
 
-The video (3 min, screen recording + voiceover) shows: register → set policy → call agent → call exceeds cap and gets blocked → owner pauses → owner resumes.
+The video (2 min, screen recording + voiceover) shows: dashboard loads → Run all 3 agents → 200 / 402 / 402 with live paygate state → click kill switch → next call shows `killSwitch: AGENT_PAUSED` → click Resume → back to ACTIVE.
 
 ## 7. Team
 
