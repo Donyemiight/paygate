@@ -1,10 +1,12 @@
 # OpenArena Submission Form — Pre-filled Answers
 
-> Submit at: https://openarena.to/en/events/buidl-quests-2026
-> Track: **02 — Sovereignty**
-> Window closes: **Aug 12, 2026 18:00 SGT**
+> **Submit at:** https://openarena.to/en/submit?event=buidl-quests-2026
+> **Track:** 02 — Sovereignty
+> **Deadline:** Aug 12, 2026 18:00 SGT (15 days from now)
+> **Video max length:** 3 minutes (your video is 2:03 — fits ✅)
+> **GitHub repo REQUIRED** (the form warns: "GITHUB REPO MUST BE PROVIDED TO PARTICIPATE")
 
-Copy-paste each field. Edit only where indicated in `[brackets]`.
+The form is client-side React. Fields below are extracted from the embedded `translations` JSON.
 
 ---
 
@@ -13,11 +15,10 @@ Copy-paste each field. Edit only where indicated in `[brackets]`.
 PayGate
 ```
 
-## Field 2: One-line pitch (max 80 chars)
+## Field 2: One-line pitch / Tagline
 ```
 x402 + ERC-8004 + on-chain spending policy + kill switch for AI agents
 ```
-(That's 68 chars. Fits.)
 
 ## Field 3: Description (max 1500 chars)
 
@@ -42,111 +43,107 @@ What PayGate adds:
 Live on Base Sepolia: 0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
 Open source (MIT): https://github.com/Donyemiight/paygate
 ```
-(About 1180 chars. Fits.)
 
 ## Field 4: Track
 ```
 02 - Sovereignty
 ```
 
-## Field 5: Repository URL
+## Field 5: GitHub Repository URL (REQUIRED)
 ```
 https://github.com/Donyemiight/paygate
 ```
 
 ## Field 6: Live demo URL
 ```
-https://sepolia.basescan.org/address/0xb4Da3B8300881E0d84f269D1Bc3BBc03839c242A
+https://paygate-demo.onrender.com
 ```
 
-(Use the BaseScan link to the deployed contract. The contract + live agent state is the canonical "live artifact" for BUIDL_QUESTS. You can replace this with a Render URL after deploying the demo at https://paygate-demo.onrender.com, but the BaseScan link is acceptable as-is.)
-
-## Field 7: Demo video URL
+## Field 7: Demo Video URL (max 3 minutes)
 ```
-[YOUTUBE_URL_OF_DEMO_VIDEO]
+https://youtu.be/kKA8nKGobbo?si=LGbOqBxVBoSqFih-
 ```
 
-(Record per DEMO-SCRIPT.md, upload as YouTube **unlisted** (NOT private — judges need to view it without an account). Paste the link here.)
-
-If you don't have a video yet, submit with this placeholder and update the form field after you record. OpenArena allows editing submissions up to the deadline.
-
-> **Note on video length:** The official BUIDL_QUESTS 2026 page does NOT specify a max video length. Target **90–120 seconds** to match the `DEMO-SCRIPT.md` (2-minute version). Comparable 2026 hackathons (ETHGlobal BuildQuest 2–4 min, Polygon BUIDL IT 3–5 min, Areon < 5 min) suggest 2–4 min is the safe range. **If the actual submission form shows a max length field, respect it.**
-
-## Field 8: Built with
+## Field 8: Submitter Email
 ```
-Solidity 0.8.24, OpenZeppelin 5, Hardhat, TypeScript, viem, x402 v2, Express, Base Sepolia, ERC-8004, EIP-3009
+[YOUR_EMAIL]  ← you must fill this in
 ```
 
-## Field 9: Team size
+## Field 9: Payout Address (where prize will be sent)
 ```
-1 (solo founder)
-```
-
-## Field 10: Team name
-```
-[YOUR_NAME] (or just "Donyemiight")
+0xb859C2038e8b1A3AE678DEEB6D1424FaF439c7EF
 ```
 
-## Field 11: Founder name
+## Field 10: How did you hear about us
 ```
-[YOUR_REAL_NAME]
-```
-
-## Field 12: Founder email
-```
-[YOUR_EMAIL] - this is where the shortlist notification goes
+Amber Group / Twitter / OpenArena
 ```
 
-## Field 13: Founder X / Twitter
+## Field 11: X (Twitter) Post URL (optional — can update after posting)
 ```
-[YOUR_X_HANDLE]
-```
-
-## Field 14: Country
-```
-[YOUR_COUNTRY]
+[URL_OF_X_THREAD_ONCE_POSTED]
 ```
 
-## Field 15: How did you hear about BUIDL_QUESTS?
+## Field 12: Funding status (optional)
 ```
-Direct invitation / Twitter / Amber Group announcement / [whichever]
-```
-
-## Field 16: Optional: any prior funding?
-```
-No (this is a fresh project, not a pivot of an existing funded company)
+not raised yet
 ```
 
-## Field 17: Optional: post-hackathon plan
+## Field 13: Pain Point Solved (optional, multi-line text)
 ```
-1. Land the kill switch as a feature in at least 2 existing x402 SDKs (proposed PRs to x402-express and Rail402)
-2. Apply to the amber.ac accelerator
-3. Launch a PayGate Directory — a public registry of agents with live policy + reputation state
-4. Ship mainnet deploy on Base once audit complete (Halborn partnership via BUIDL_QUESTS)
+x402 has 5 known attacks (grant-before-settle, replay, missing kill switch,
+no identity, no policy). PayGate is the missing operational layer — a
+per-agent SpendingPolicy contract that enforces caps on-chain, plus a
+one-transaction kill switch, plus ERC-8004 identity + reputation integration.
 ```
 
-## Field 18: Anything else?
+## Field 14: Expectations (multi-select — pick all that apply)
 ```
-PayGate was built in 3 weeks specifically for BUIDL_QUESTS 2026. The full
-architecture, deployment, and SDK are open source under MIT. The team has
-prior shipped agent-service work: ReppS (x402 on X Layer), VibeCast
-(YouTube-to-thread), LCP RiskGuard (liquidity monitoring).
+[Select: "Funding" / "Mentorship" / "Connections" / "Acceleration" / "Demo Day"
+whichever feels right]
 ```
 
 ---
 
-# Checklist before submitting
+# Pre-submit checklist
 
-- [ ] Demo URL is live (or BaseScan link is set as fallback)
-- [ ] Demo video is uploaded to YouTube (unlisted OK)
-- [ ] GitHub repo is public at https://github.com/Donyemiight/paygate
+- [ ] GitHub repo is public at https://github.com/Donyemiight/paygate ✅
+- [ ] Demo URL is live (https://paygate-demo.onrender.com) ✅
+- [ ] Demo video is uploaded to YouTube as **Unlisted** (NOT Private) ✅
+- [ ] Video length is 2:03, well under the 3-min limit ✅
 - [ ] Contact email is one you actually check
-- [ ] All `[brackets]` filled in
-- [ ] No placeholder text remaining
-- [ ] Submission made BEFORE Aug 12, 18:00 SGT (≈ 12:00 UTC)
+- [ ] Submit BEFORE Aug 12, 18:00 SGT (15 days from now)
 
 # After submission
 
 You'll get a confirmation email. Top 20 announced Sep 11, Top 10 announced Sep 24. Pitch Day Singapore Oct 5.
 
-If shortlisted, OpenArena will reach out via the email you provided. Check spam folder.
+If shortlisted, OpenArena will reach out via the email you provided. **Check spam folder.**
+
+---
+
+# What I had WRONG in the previous version of this file
+
+The form does NOT have:
+- ❌ "Built with" (used to be Field 8)
+- ❌ "Team size" (used to be Field 9)
+- ❌ "Team name" (used to be Field 10)
+- ❌ "Founder name" (used to be Field 11)
+- ❌ "Founder X / Twitter" (used to be Field 13)
+- ❌ "Country" (used to be Field 14)
+
+It DOES have:
+- ✅ Project Name
+- ✅ Tagline
+- ✅ Description
+- ✅ Track
+- ✅ GitHub URL (REQUIRED)
+- ✅ Live demo URL
+- ✅ Video Link (max 3 min)
+- ✅ Submitter Email
+- ✅ Payout Address
+- ✅ How did you hear about us
+- ✅ X Post URL (optional)
+- ✅ Funding status (optional)
+- ✅ Pain Point Solved (optional)
+- ✅ Expectations (multi-select)
